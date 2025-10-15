@@ -5,6 +5,8 @@ import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
+import { LinkText } from '@/components/ui/link';
+import { VStack } from '@/components/ui/vstack';
 import { Link as RouterLink } from 'expo-router';
 import React from 'react';
 
@@ -76,14 +78,14 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
-      {/* <VStack>
+      <VStack>
         <RouterLink href="/login">
           <LinkText size="lg">Login page</LinkText>
         </RouterLink>
         <RouterLink href="/signup">
           <LinkText size="lg">Sign up</LinkText>
         </RouterLink>
-      </VStack> */}
+      </VStack>
     </ParallaxScrollView>
   );
 }
