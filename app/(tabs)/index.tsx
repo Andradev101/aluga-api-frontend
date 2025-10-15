@@ -5,7 +5,9 @@ import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { Link as RouterLink } from 'expo-router';
+import React from 'react';
+
 
 export default function HomeScreen() {
   return (
@@ -37,28 +39,28 @@ export default function HomeScreen() {
         </ThemedText>
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
+        <RouterLink href="/modal">
+          <RouterLink.Trigger>
             <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
+          </RouterLink.Trigger>
+          <RouterLink.Preview />
+          <RouterLink.Menu>
+            <RouterLink.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
+            <RouterLink.MenuAction
               title="Share"
               icon="square.and.arrow.up"
               onPress={() => alert('Share pressed')}
             />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
+            <RouterLink.Menu title="More" icon="ellipsis">
+              <RouterLink.MenuAction
                 title="Delete"
                 icon="trash"
                 destructive
                 onPress={() => alert('Delete pressed')}
               />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+            </RouterLink.Menu>
+          </RouterLink.Menu>
+        </RouterLink>
 
         <ThemedText>
           {`Tap the Explore tab to learn more about what's included in this starter app.`}
@@ -74,6 +76,14 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      {/* <VStack>
+        <RouterLink href="/login">
+          <LinkText size="lg">Login page</LinkText>
+        </RouterLink>
+        <RouterLink href="/signup">
+          <LinkText size="lg">Sign up</LinkText>
+        </RouterLink>
+      </VStack> */}
     </ParallaxScrollView>
   );
 }
