@@ -41,7 +41,7 @@ export function Signup() {
     });
   };
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setIsLoading(true)
     
     for (const [key, fieldProps] of Object.entries(form)) {
@@ -63,13 +63,12 @@ export function Signup() {
         "lastName": form.lastName.value,
         "address": form.address.value
       })
-    console.log(body)
-    performRegisterCallout(body)
+    await performRegisterCallout(body)
     setIsLoading(false)
   };
 
   async function performRegisterCallout(payload: any) {
-    const url = 'https://192.168.0.9:8000/users';
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
     const options = {
       method: 'POST',
       credentials: 'include' as RequestCredentials,

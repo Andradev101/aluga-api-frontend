@@ -34,25 +34,24 @@ export function Login() {
     });
   };
 
-  const handleSubmit = () => {
+  async function handleSubmit() {
     setIsLoading(true)
+    
     setIsPasswordInvalid(false);
     setIsUsernameInvalid(false);
-    
     if(!usernameInputValue || !passwordInputValue) {
       if(!usernameInputValue) setIsUsernameInvalid(true);
       if(!passwordInputValue) setIsPasswordInvalid(true);
       setIsLoading(false);
       return;
     }
-
-    performLoginCallout(usernameInputValue, passwordInputValue);
-
+    
+    await performLoginCallout(usernameInputValue, passwordInputValue);
     setIsLoading(false)
   };
 
   async function performLoginCallout(username: string, password: string) {
-    const url = 'https://192.168.0.9:8000/login';
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/login`;
     
     const options = {
       method: 'POST',
@@ -67,7 +66,6 @@ export function Login() {
       console.log(response);
       console.log(data);
       if(response.ok){
-        console.log("OK");
         router.push('/')
       } else {
         // setLoginError(data);

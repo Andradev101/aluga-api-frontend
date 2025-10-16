@@ -85,6 +85,9 @@ export default function HomeScreen() {
         <RouterLink href="/signup">
           <LinkText size="lg">Sign up</LinkText>
         </RouterLink>
+        <RouterLink href="/users">
+          <LinkText size="lg">Users</LinkText>
+        </RouterLink>
       </VStack>
     </ParallaxScrollView>
   );
