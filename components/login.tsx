@@ -1,3 +1,4 @@
+import * as Storage from '@/components/secureStorage';
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import {
   FormControl,
@@ -17,6 +18,7 @@ import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
 import { router, Link as RouterLink } from 'expo-router';
 import React from 'react';
+import { Text } from 'react-native';
 
 
 export function Login() {
@@ -28,6 +30,10 @@ export function Login() {
   const [isUsernameInvalid, setIsUsernameInvalid] = React.useState(false);
   const [isPasswordInvalid, setIsPasswordInvalid] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
+  
+  const [isLoginError, setIsLoginError] = React.useState(false);
+  const [loginErrorMsg, setLoginErrorMsg] = React.useState("");
+  
   const handleState = () => {
     setShowPassword((showState) => {
       return !showState;
@@ -35,10 +41,13 @@ export function Login() {
   };
 
   async function handleSubmit() {
-    setIsLoading(true)
     
+    setIsLoading(true);
+    setIsLoginError(false);
+    setLoginErrorMsg("");
     setIsPasswordInvalid(false);
     setIsUsernameInvalid(false);
+
     if(!usernameInputValue || !passwordInputValue) {
       if(!usernameInputValue) setIsUsernameInvalid(true);
       if(!passwordInputValue) setIsPasswordInvalid(true);
@@ -47,6 +56,8 @@ export function Login() {
     }
     
     await performLoginCallout(usernameInputValue, passwordInputValue);
+    await performGetCredentials();
+    router.push('/homepage')
     setIsLoading(false)
   };
 
@@ -65,10 +76,31 @@ export function Login() {
       const data = await response.json();
       console.log(response);
       console.log(data);
+      if(!response.ok){
+        setIsLoginError(true)
+        setLoginErrorMsg(data.detail? data.detail : "An unexpected error occurred.");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function performGetCredentials() {
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/credentials`;
+    
+    const options = {
+      method: 'GET',
+      credentials: 'include' as RequestCredentials,
+      headers: {'content-type': 'application/json'},
+    };
+
+    try {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      console.log(response);
+      console.log(data);
       if(response.ok){
-        router.push('/')
-      } else {
-        // setLoginError(data);
+        await Storage.save("user_role", data.token_content.role);
       }
     } catch (error) {
       console.error(error);
@@ -78,7 +110,7 @@ export function Login() {
   return (
       <VStack>
         <Heading>Login to your account</Heading>
-        <HStack space="lg">
+        <HStack space="xs">
           <Heading size={"xs"}>Don&apos;t have an account?</Heading>
           <RouterLink href="/signup">
             <LinkText size="xs">Sign up</LinkText>
@@ -109,7 +141,11 @@ export function Login() {
           <FormControlError>
             <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
             <FormControlErrorText className="text-red-500">
-              Cannot be blank.
+              <Text>{loginErrorMsg}</Text>
+            </FormControlErrorText>
+            <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
+            <FormControlErrorText className="text-red-500">
+              Invalid.
             </FormControlErrorText>
           </FormControlError>
         </FormControl>
@@ -137,7 +173,7 @@ export function Login() {
           </Input>
           <FormControlHelper>
             <FormControlHelperText>
-              Must be at least 6 characters.
+              Must be at least 8 characters 1 special character and 1 number.
             </FormControlHelperText>
           </FormControlHelper>
           <FormControlError>
@@ -148,14 +184,27 @@ export function Login() {
           </FormControlError>
         </FormControl>
         
+        <FormControl
+        isInvalid = {isLoginError}
+        isDisabled={false}
+        isReadOnly={false}
+        isRequired={true}> 
+          <FormControlError>
+            <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
+            <FormControlErrorText className="text-red-500">
+              <Text>{loginErrorMsg}</Text>
+            </FormControlErrorText>
+          </FormControlError>
+        </FormControl>
+
         <Button
           className="w-fit self-end mt-4"
           size="sm"
           variant="outline"
           onPress={handleSubmit}
         >
-          {isLoading && <ButtonSpinner color="gray" />}
           <ButtonText>Login</ButtonText>
+          {isLoading && <ButtonSpinner color="gray" />}
         </Button>
       </VStack>
   );

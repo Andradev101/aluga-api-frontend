@@ -1,17 +1,16 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
 import { HelloWave } from '@/components/hello-wave';
 import ParallaxScrollView from '@/components/parallax-scroll-view';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
+import { Image } from 'expo-image';
 import { Link as RouterLink } from 'expo-router';
 import React from 'react';
-
+import { Platform, StyleSheet } from 'react-native';
 
 export default function HomeScreen() {
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -78,15 +77,13 @@ export default function HomeScreen() {
           <ThemedText type="defaultSemiBold">app-example</ThemedText>.
         </ThemedText>
       </ThemedView>
+      
       <VStack>
         <RouterLink href="/login">
           <LinkText size="lg">Login page</LinkText>
         </RouterLink>
         <RouterLink href="/signup">
           <LinkText size="lg">Sign up</LinkText>
-        </RouterLink>
-        <RouterLink href="/users">
-          <LinkText size="lg">Users</LinkText>
         </RouterLink>
       </VStack>
     </ParallaxScrollView>

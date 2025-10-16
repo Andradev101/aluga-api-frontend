@@ -1,4 +1,7 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+*.env
+app-old/
+components-old/
 
 # dependencies
 node_modules/
