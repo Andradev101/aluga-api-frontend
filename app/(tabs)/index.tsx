@@ -8,7 +8,7 @@ import { Image } from 'expo-image';
 import { Link as RouterLink } from 'expo-router';
 import React from 'react';
 import { Platform, StyleSheet } from 'react-native';
-
+import 'react-native-reanimated';
 export default function HomeScreen() {
 
   return (

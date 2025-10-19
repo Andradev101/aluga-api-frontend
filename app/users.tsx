@@ -1,19 +1,29 @@
-
-import { Center } from '@/components/ui/center';
-import React from 'react';
-import { Button, Text } from 'react-native';
+import ModalComponent from "@/components/modal";
+import {
+  Table,
+  TableBody,
+  TableData,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { VStack } from "@/components/ui/vstack";
+import React from "react";
+import { Button, ScrollView } from "react-native";
 
 export default function HomeScreen() {
-  
-const [payloadBody, setpayloadBody] = React.useState('asad');
+  const [payloadBody, setpayloadBody] = React.useState("asad");
+  const [tableHeadFields, setTableHeadFields] = React.useState({});
+  const [tableBodyRows, setTableBodyRows] = React.useState({});
+  const [renderTable, setRenderTable] = React.useState(false);
 
-async function performUsersCallout() {
+  async function performUsersCallout() {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
-    
+
     const options = {
-      method: 'GET',
-      credentials: 'include' as RequestCredentials,
-      headers: {'content-type': 'application/json'},
+      method: "GET",
+      credentials: "include" as RequestCredentials,
+      headers: { "content-type": "application/json" },
     };
 
     try {
@@ -21,9 +31,12 @@ async function performUsersCallout() {
       const data = await response.json();
       console.log(response);
       console.log(data);
-      if(response.ok){
+      if (response.ok) {
         console.log("OK");
-        setpayloadBody(JSON.stringify(data))
+        console.log(Object.keys(data[0]));
+        setTableHeadFields(Object.keys(data[0]));
+        setTableBodyRows(data);
+        setRenderTable(true);
       } else {
         // setLoginError(data);
       }
@@ -32,10 +45,54 @@ async function performUsersCallout() {
     }
   }
 
+  function defineTableHead(possibleFields: any) {
+    console.log(possibleFields);
+    return (
+      <>
+        {possibleFields.map((item: any, index: any) => (
+          <TableHead key={index}>{item}</TableHead>
+        ))}
+      </>
+    );
+  }
+
+  function defineTableBody(tableData: any) {
+    return (
+      <>
+        {tableData.map((item: any, index: any) => (
+          <TableRow key={index}>
+            {/* <TableData className='w-[150px]'>{item.id}</TableData> */}
+            <TableData className="min-w-[100px]">{item.userName}</TableData>
+            {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
+            <TableData className="min-w-[100px]">{item.role}</TableData>
+            <TableData className="min-w-[100px]">
+              <ModalComponent content={item}/>
+            </TableData>
+            {/* <TableData className='w-[150px]'>{item.birthDate}</TableData> */}
+            {/* <TableData className="w-[250px]">{item.emailAddress}</TableData> */}
+            {/* <TableData className="w-[250px]">{item.phoneNumber}</TableData> */}
+            {/* <TableData className='w-[150px]'>{item.firstName }</TableData> */}
+            {/* <TableData className='w-[150px]'>{item.lastName}</TableData> */}
+            {/* <TableData className='w-[150px]'>{item.address}</TableData> */}
+          </TableRow>
+        ))}
+      </>
+    );
+  }
+
   return (
-    <Center className="flex-1">
-      <Button title='callout' onPress={performUsersCallout}></Button>
-      <Text>{payloadBody}</Text>
-    </Center>
+    <VStack>
+      <ScrollView>
+        <Table className="w-full">
+          <TableHeader>
+            {/* <TableRow className="w-full">
+                {renderTable && defineTableHead(tableHeadFields)}
+              </TableRow> */}
+          </TableHeader>
+          <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
+        </Table>
+      </ScrollView>
+      <Button title="callout" onPress={performUsersCallout}></Button>
+    </VStack>
   );
 }

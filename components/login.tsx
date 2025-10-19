@@ -24,8 +24,8 @@ import { Text } from 'react-native';
 export function Login() {
   const [isLoading, setIsLoading] = React.useState(false);
   
-  const [usernameInputValue, setUsernameInputValue] = React.useState('');
-  const [passwordInputValue, setPasswordInputValue] = React.useState('');
+  const [usernameInputValue, setUsernameInputValue] = React.useState('maria_lee');
+  const [passwordInputValue, setPasswordInputValue] = React.useState('Admin!234');
   
   const [isUsernameInvalid, setIsUsernameInvalid] = React.useState(false);
   const [isPasswordInvalid, setIsPasswordInvalid] = React.useState(false);
@@ -55,9 +55,9 @@ export function Login() {
       return;
     }
     
-    await performLoginCallout(usernameInputValue, passwordInputValue);
+    let loginRes = await performLoginCallout(usernameInputValue, passwordInputValue);
     await performGetCredentials();
-    router.push('/homepage')
+    if(loginRes) router.push('/homepage')
     setIsLoading(false)
   };
 
@@ -79,9 +79,12 @@ export function Login() {
       if(!response.ok){
         setIsLoginError(true)
         setLoginErrorMsg(data.detail? data.detail : "An unexpected error occurred.");
+        return false;
       }
+      return true;
     } catch (error) {
       console.error(error);
+      return false;
     }
   }
 
