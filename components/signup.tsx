@@ -2,17 +2,19 @@ import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorTe
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
-import { AlertCircleIcon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
+import { AlertCircleIcon, EyeIcon, EyeOffIcon } from '@/components/ui/icon';
+import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { LinkText } from '@/components/ui/link';
+import { Spinner } from '@/components/ui/spinner';
 import { VStack } from '@/components/ui/vstack';
 import { Link as RouterLink } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { DatePicker } from './datepicker';
 
 type UserSchemaValue = {
   value: string;
   isTouched: boolean;
+  invalidStateMsg?: string;
 };
 
 type UserSchema = {
@@ -20,23 +22,24 @@ type UserSchema = {
 };
 
 export function Signup() {
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [showDatePicker, setShowDatePicker] = React.useState(false);
-  
+  useEffect(() => {
+    handleGetUserSchema()
+  }, []);
 
+  const [isIntegrationLoading, setIsIntegrationLoading] = React.useState(false);
   const [isUserSchemaReady, setIsUserSchemaReady] = React.useState(false);
   const [userSchemaInfo, setUserSchemaInfo] = React.useState({});
   const [userSchema, setUserSchema] = React.useState<UserSchema>({});
-  const [form, setForm] = React.useState({
-    userName: { value: '', isTouched: false },
-    password: { value: '', isTouched: false },
-    birthDate: { value: new Date(), isTouched: false },
-    emailAddress: { value: '', isTouched: false },
-    phoneNumber: { value: '', isTouched: false },
-    firstName: { value: '', isTouched: false },
-    lastName: { value: '', isTouched: false },
-    address: { value: '', isTouched: false },
-  });
+  // const [form, setForm] = React.useState({
+  //   userName: { value: '', isTouched: false },
+  //   password: { value: '', isTouched: false },
+  //   birthDate: { value: new Date(), isTouched: false },
+  //   emailAddress: { value: '', isTouched: false },
+  //   phoneNumber: { value: '', isTouched: false },
+  //   firstName: { value: '', isTouched: false },
+  //   lastName: { value: '', isTouched: false },
+  //   address: { value: '', isTouched: false },
+  // });
 
   const [showPassword, setShowPassword] = React.useState(false);
   const handleState = () => {
@@ -46,15 +49,21 @@ export function Signup() {
   };
 
   async function handleSubmit() {
-    setIsLoading(true)
+    setIsIntegrationLoading(true)
+    let invalidState = false;
     for (const [key, fieldProps] of Object.entries(userSchema)) {
-      // console.log(key, [fieldProps.value, fieldProps.isTouched]);
+      console.log(key, [fieldProps.value, fieldProps.isTouched]); 
       if (!fieldProps.value) {
-        setIsLoading(false)
-        return;
+        setUserSchema((prev) => ({
+          ...prev,
+          [key]: { ...prev[key],  isTouched: true },
+        }))
+        setIsIntegrationLoading(false)
+        invalidState = true;
       }
-      
     }
+    if(invalidState) return;
+    
     let body = JSON.stringify({
         "userName": userSchema.userName.value,
         "password": userSchema.password.value,
@@ -67,7 +76,7 @@ export function Signup() {
         "address": userSchema.address.value
       })
     await performRegisterCallout(body)
-    setIsLoading(false)
+    setIsIntegrationLoading(false)
   };
 
   async function performRegisterCallout(payload: any) {
@@ -88,6 +97,27 @@ export function Signup() {
       } else {
         console.log(data);
         console.log(data.detail);
+        data.detail.forEach((element: any) => {
+          console.log(element.loc[1])
+          setUserSchema((prev) => ({
+              ...prev,
+              [element.loc[1]]: { ...prev[element.loc[1]],  invalidStateMsg: element.msg},
+            }))
+          setUserSchema((prev) => ({
+              ...prev,
+              [element.loc[1]]: { ...prev[element.loc[1]],  isTouched: true},
+            }))
+        });
+        // for (const [key, fieldProps] of Object.entries(userSchema)) {
+        //   console.log(key, [fieldProps.value, fieldProps.isTouched]); 
+        //   if (!fieldProps.value) {
+        //     setUserSchema((prev) => ({
+        //       ...prev,
+        //       [key]: { ...prev[key],  isTouched: true},
+        //     }))
+        //     setIsIntegrationLoading(false)
+        //   }
+        // }
       }
     } catch (error) {
       console.error("AAAAAAAAAAAAAA");
@@ -95,8 +125,8 @@ export function Signup() {
     }
   }
 
-  function checkBlankField(obj:any) {
-    if(!obj.value && obj.isTouched ) return true
+  function checkFieldValidity(obj:any) {
+    if(obj.isTouched && obj.invalidStateMsg) return true
     return false
   }
 
@@ -122,13 +152,16 @@ export function Signup() {
           console.log("OK");
           
           let userSchemaFields = Object.keys(data.components.schemas.UserSignup.properties);
+          
+          //super important, imposes field behavior for every form field
           let userSchemaForm:any = {};
           userSchemaFields.map((field)=>{ if(field === "birthdate"){
-            return userSchemaForm[field] = { value: new Date(), isTouched: false };
+            return userSchemaForm[field] = { value: new Date(), isTouched: false, invalidStateMsg: "" };
             } else {
-              return userSchemaForm[field] = { value: "", isTouched: false };
+              return userSchemaForm[field] = { value: "", isTouched: false, invalidStateMsg: "" };
             }
           })
+
           setUserSchema(userSchemaForm)
           console.log(data.components.schemas.UserSignup.properties)
           setUserSchemaInfo(data.components.schemas.UserSignup.properties)
@@ -148,39 +181,39 @@ export function Signup() {
           <LinkText size="xs">Login</LinkText>
         </RouterLink>
       </HStack>
-      <Button onPress={handleGetUserSchema}></Button>
+      
+      {!isUserSchemaReady && <Spinner size="large" color="grey" />}
+      
       { isUserSchemaReady &&
         Object.entries(userSchema).map(([key, value])=>{
           const meta = (userSchemaInfo as any)[key]; //god forbid typing
           console.log(key, userSchema[key])
+          // console.log(meta)
           if(key === "birthDate") {
-            console.log("birthDate", userSchema[key].value)
+            // console.log("birthDate", userSchema[key].value)
             return(
               <>
-                <FormControl isInvalid={checkBlankField(userSchema[key])} isRequired>
+                <FormControl isInvalid={checkFieldValidity(userSchema[key])} isRequired size="lg">
                   <FormControlLabel>
                     <FormControlLabelText>Birth Date</FormControlLabelText>
                   </FormControlLabel>
-                    <DatePicker date={new Date()} onDateChange={handleDateChange} />
+                    <DatePicker date={!userSchema[key].value ? new Date() : new Date(userSchema[key].value)} onDateChange={handleDateChange} />
                   <FormControlHelper>
                     <FormControlHelperText>Your birth date.</FormControlHelperText>
                   </FormControlHelper>
-                  <FormControlError>
-                    <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
-                    <FormControlErrorText className="text-red-500">Cannot be blank.</FormControlErrorText>
-                  </FormControlError>
                 </FormControl>
               </>
             )
           } else{
             return (
-              <FormControl isInvalid={checkBlankField(userSchema[key])} isRequired key={key}>
+              <FormControl isInvalid={userSchema[key].invalidStateMsg !== "" || (userSchema[key].isTouched && userSchema[key].value === "")} isRequired key={key} size="lg">
                 <FormControlLabel>
                   <FormControlLabelText>{meta.title}</FormControlLabelText>
                 </FormControlLabel>
                 <Input>
                   <InputField
-                    type={meta.format}
+                    // type={meta.format}
+                    type={meta.format === "password" ? (showPassword ? 'text' : meta.format) : meta.format}
                     value={userSchema[key].value}
                     onChangeText={(text) =>
                       setUserSchema((prev) => ({
@@ -194,8 +227,13 @@ export function Signup() {
                         [key]: { ...prev[key], isTouched: true },
                       }))
                     }
-
                   />
+                  {
+                    meta.format === "password" &&
+                    <InputSlot className="pr-3" onPress={handleState}>
+                      <InputIcon as={showPassword ? EyeIcon : EyeOffIcon} />
+                    </InputSlot>
+                  }
                 </Input>
                 <FormControlHelper>
                   <FormControlHelperText>{meta.description}</FormControlHelperText>
@@ -206,7 +244,7 @@ export function Signup() {
                     className="text-red-500"
                   />
                   <FormControlErrorText className="text-red-500">
-                    Cannot be blank.
+                    {userSchema[key].invalidStateMsg === "" ?"Field cannot be blank." : userSchema[key].invalidStateMsg}
                   </FormControlErrorText>
                 </FormControlError>
               </FormControl>
@@ -214,15 +252,18 @@ export function Signup() {
           }
         })
       }
-      <Button
-        className="w-fit self-end mt-4"
-        size="sm"
-        variant="outline"
-        onPress={handleSubmit}
-      >
-        {isLoading && <ButtonSpinner color="gray" />}
-        <ButtonText>Register</ButtonText>
-      </Button>
+      { isUserSchemaReady &&
+        <Button
+          className="w-fit self-end mt-4"
+          size="sm"
+          variant="solid"
+          action="positive"
+          onPress={handleSubmit}
+        >
+          {isIntegrationLoading && <ButtonSpinner color="gray" />}
+          <ButtonText >Register</ButtonText>
+        </Button>
+      }
     </VStack>
   );
 }

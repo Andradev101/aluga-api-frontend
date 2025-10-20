@@ -1,4 +1,5 @@
 import ModalComponent from "@/components/modal";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -8,10 +9,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VStack } from "@/components/ui/vstack";
-import React from "react";
-import { Button, ScrollView } from "react-native";
+import React, { useEffect } from "react";
+import { ScrollView } from "react-native";
 
 export default function HomeScreen() {
+  useEffect(() => {
+      performUsersCallout()
+    }, []);
+    
   const [payloadBody, setpayloadBody] = React.useState("asad");
   const [tableHeadFields, setTableHeadFields] = React.useState({});
   const [tableBodyRows, setTableBodyRows] = React.useState({});
@@ -89,10 +94,10 @@ export default function HomeScreen() {
                 {renderTable && defineTableHead(tableHeadFields)}
               </TableRow> */}
           </TableHeader>
+          {!renderTable && <Spinner size="large" color="grey" />}
           <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
         </Table>
       </ScrollView>
-      <Button title="callout" onPress={performUsersCallout}></Button>
     </VStack>
   );
 }
