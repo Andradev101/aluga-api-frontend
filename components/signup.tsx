@@ -1,5 +1,5 @@
-import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components-old/ui/form-control';
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
+import { FormControl, FormControlError, FormControlErrorIcon, FormControlErrorText, FormControlHelper, FormControlHelperText, FormControlLabel, FormControlLabelText } from '@/components/ui/form-control';
 import { Heading } from '@/components/ui/heading';
 import { HStack } from '@/components/ui/hstack';
 import { AlertCircleIcon, EyeIcon, EyeOffIcon } from '@/components/ui/icon';
@@ -150,7 +150,7 @@ export function Signup() {
         const data = await response.json();
         if(response.ok){
           console.log("OK");
-          
+          console.log(data)
           let userSchemaFields = Object.keys(data.components.schemas.UserSignup.properties);
           
           //super important, imposes field behavior for every form field
