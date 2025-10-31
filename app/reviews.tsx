@@ -12,6 +12,7 @@ import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { getAllHotels, Hotel } from '@/services/hotels-api';
 import { createReview, deleteReview, getHotelReviews, updateReview } from '@/services/reviews-api';
+import { Review } from '@/types/reviews';
 import React, { useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 
@@ -19,14 +20,14 @@ import { ScrollView } from 'react-native';
 
 export default function ReviewsScreen() {
   const [loading, setLoading] = useState(false);
-  const [reviews, setReviews] = useState([]);
-  const [allReviews, setAllReviews] = useState([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [selectedHotel, setSelectedHotel] = useState('');
   const [filterHotel, setFilterHotel] = useState('all');
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
-  const [editingReview, setEditingReview] = useState<any>(null);
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -39,7 +40,7 @@ export default function ReviewsScreen() {
     setLoading(true);
     try {
       if (editingReview) {
-        await updateReview(editingReview.id, { rating, comment });
+        await updateReview(editingReview.id.toString(), { rating, comment });
         setEditingReview(null);
       } else {
         await createReview(selectedHotel, { rating, comment });
@@ -55,21 +56,21 @@ export default function ReviewsScreen() {
     setLoading(false);
   };
 
-  const handleEditReview = (review: any) => {
+  const handleEditReview = (review: Review) => {
     setEditingReview(review);
     setSelectedHotel(review.hotel_id.toString());
     setRating(review.rating);
-    setComment(review.comment);
+    setComment(review.comment || '');
     setShowForm(true);
     setTimeout(() => {
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     }, 100);
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = async (reviewId: number) => {
     setLoading(true);
     try {
-      await deleteReview(reviewId);
+      await deleteReview(reviewId.toString());
       await loadAllReviews();
     } catch (error: any) {
       // Silently handle error
@@ -99,9 +100,9 @@ export default function ReviewsScreen() {
         }
       }
       // Ordena por data de criação (mais recente primeiro)
-      const sortedReviews = allReviewsData.sort((a, b) => {
-        const dateA = new Date(a.created_at || a.id).getTime();
-        const dateB = new Date(b.created_at || b.id).getTime();
+      const sortedReviews = allReviewsData.sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || a.created_at || a.id).getTime();
+        const dateB = new Date(b.createdAt || b.created_at || b.id).getTime();
         return dateB - dateA;
       });
       setAllReviews(sortedReviews);
@@ -112,7 +113,7 @@ export default function ReviewsScreen() {
     setLoading(false);
   };
 
-  const filterReviews = (reviewsData: any[], hotelFilter: string) => {
+  const filterReviews = (reviewsData: Review[], hotelFilter: string) => {
     let filtered;
     if (hotelFilter === 'all') {
       filtered = reviewsData;
@@ -122,9 +123,9 @@ export default function ReviewsScreen() {
       );
     }
     // Ordena por data (mais recente primeiro)
-    const sorted = filtered.sort((a, b) => {
-      const dateA = new Date(a.created_at || a.id).getTime();
-      const dateB = new Date(b.created_at || b.id).getTime();
+    const sorted = filtered.sort((a: any, b: any) => {
+      const dateA = new Date(a.createdAt || a.created_at || a.id).getTime();
+      const dateB = new Date(b.createdAt || b.created_at || b.id).getTime();
       return dateB - dateA;
     });
     setReviews(sorted);
@@ -190,7 +191,7 @@ export default function ReviewsScreen() {
     }
   }, [hotels]);
 
-  const ReviewCard = ({ review }: { review: any }) => {
+  const ReviewCard = ({ review }: { review: Review }) => {
     const hotel = hotels.find(h => h.id === review.hotel_id);
     const hotelName = hotel?.name || `Hotel ID ${review.hotel_id}`;
     const isOwner = review.user?.user_name === currentUser;
@@ -287,7 +288,7 @@ export default function ReviewsScreen() {
             
             <VStack className="gap-2">
               <Text className="text-sm font-medium text-gray-700">Selecione o Hotel</Text>
-              <Select value={selectedHotel} onValueChange={setSelectedHotel}>
+              <Select selectedValue={selectedHotel} onValueChange={setSelectedHotel}>
                 <SelectTrigger className="w-full">
                   <SelectInput placeholder="Escolha um hotel..." />
                   <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -344,7 +345,7 @@ export default function ReviewsScreen() {
         <Card className="p-4 bg-white border border-gray-200 rounded-xl">
           <VStack className="gap-3">
             <Text className="font-medium text-gray-700">Filtrar Avaliações</Text>
-            <Select value={filterHotel} onValueChange={handleFilterChange}>
+            <Select selectedValue={filterHotel} onValueChange={handleFilterChange}>
               <SelectTrigger className="w-full">
                 <SelectInput placeholder="Filtrar por hotel..." />
                 <SelectIcon className="mr-3" as={ChevronDownIcon} />
@@ -382,7 +383,7 @@ export default function ReviewsScreen() {
             </Card>
           )}
           
-          {reviews.filter(review => review && review.id).map((review: any) => (
+          {reviews.filter(review => review && review.id).map((review: Review) => (
             <ReviewCard key={review.id} review={review} />
           ))}
         </VStack>

@@ -3,10 +3,11 @@ export interface Review {
   rating: number;
   comment: string | null;
   hotel_id: number;
-  user: {
-    user_name: string;
+  user?: {
+    user_name?: string;
   };
   createdAt?: string;
+  created_at?: string;
 }
 
 export interface CreateReviewRequest {
