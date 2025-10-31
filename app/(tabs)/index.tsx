@@ -79,6 +79,9 @@ export default function HomeScreen() {
       </ThemedView>
       
       <VStack>
+        <RouterLink href="/homepage">
+          <LinkText size="lg">🏠 Homepage</LinkText>
+        </RouterLink>
         <RouterLink href="/login">
           <LinkText size="lg">Login page</LinkText>
         </RouterLink>

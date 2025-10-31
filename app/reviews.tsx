@@ -14,7 +14,8 @@ import { getAllHotels, Hotel } from '@/services/hotels-api';
 import { createReview, deleteReview, getHotelReviews, updateReview } from '@/services/reviews-api';
 import { Review } from '@/types/reviews';
 import React, { useRef, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { Image, ScrollView, TouchableOpacity } from 'react-native';
+import { router } from 'expo-router';
 
 
 
@@ -260,7 +261,13 @@ export default function ReviewsScreen() {
       <VStack className="p-6 gap-6">
         {/* Header */}
         <VStack className="items-center gap-2">
-          <Heading className="text-3xl font-bold text-aluga-500">🌴 Aluga Aí</Heading>
+          <TouchableOpacity onPress={() => router.push('/homepage')}>
+            <Image 
+              source={require('@/assets/images/logo.png')} 
+              style={{ width: 350, height: 150 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
         </VStack>
 
         {/* Botão para mostrar formulário - apenas se logado */}
