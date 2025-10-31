@@ -42,8 +42,10 @@ export function DatePicker({ date, onDateChange }: DatePickerProps) {
       <Pressable onPress={showDatepicker}>
             <input
               type="date"
+              value={date.toISOString().split('T')[0]}
               onChange={(e) => {
-                const newDate = new Date(e.target.value);
+                const newDate = new Date(e.target.value + 'T00:00:00');
+                console.log("Data selecionada:", newDate);
                 onChange(e, newDate)
               }}
             />

@@ -1,67 +1,103 @@
 import { CreateReviewRequest, Review, UpdateReviewRequest } from '@/types/reviews';
 
-const API_BASE_URL = 'https://z7wdrv.mmar.dev';
+const getApiUrl = (endpoint: string) => `${process.env.EXPO_PUBLIC_API_URL}${endpoint}`;
 
-const fetchWithCors = async (url: string, options: RequestInit = {}) => {
-  const defaultOptions: RequestInit = {
-    mode: 'cors',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-    ...options,
-  };
-  
-  return await fetch(url, defaultOptions);
-};
+const getDefaultOptions = (method: string = 'GET', body?: any): RequestInit => ({
+  method,
+  credentials: 'include' as RequestCredentials,
+  headers: { 'content-type': 'application/json' },
+  ...(body && { body: JSON.stringify(body) })
+});
 
 export const createReview = async (hotelId: string, reviewData: CreateReviewRequest): Promise<Review> => {
-  const response = await fetchWithCors(`${API_BASE_URL}/reviews/hotels/${hotelId}/reviews`, {
-    method: 'POST',
-    body: JSON.stringify(reviewData),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Erro ${response.status}: ${errorText}`);
+  try {
+    const response = await fetch(
+      getApiUrl(`/reviews/hotels/${hotelId}/reviews`),
+      getDefaultOptions('POST', reviewData)
+    );
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao criar review');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao criar review:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const getHotelReviews = async (hotelId: string): Promise<Review[]> => {
-  const response = await fetchWithCors(`${API_BASE_URL}/reviews/hotels/${hotelId}/reviews`);
-  
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Erro ${response.status}: ${errorText}`);
+  try {
+    const response = await fetch(
+      getApiUrl(`/reviews/hotels/${hotelId}/reviews`),
+      getDefaultOptions('GET')
+    );
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao buscar reviews');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar reviews:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const updateReview = async (reviewId: string, reviewData: UpdateReviewRequest): Promise<Review> => {
-  const response = await fetchWithCors(`${API_BASE_URL}/reviews/${reviewId}`, {
-    method: 'PUT',
-    body: JSON.stringify(reviewData),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Erro ${response.status}: ${errorText}`);
+  try {
+    const response = await fetch(
+      getApiUrl(`/reviews/${reviewId}`),
+      getDefaultOptions('PUT', reviewData)
+    );
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao atualizar review');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao atualizar review:', error);
+    throw error;
   }
-
-  return response.json();
 };
 
 export const deleteReview = async (reviewId: string): Promise<void> => {
-  const response = await fetchWithCors(`${API_BASE_URL}/reviews/${reviewId}`, {
-    method: 'DELETE',
-  });
+  try {
+    const response = await fetch(
+      getApiUrl(`/reviews/${reviewId}`),
+      getDefaultOptions('DELETE')
+    );
+    
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.detail || 'Erro ao deletar review');
+    }
+  } catch (error) {
+    console.error('Erro ao deletar review:', error);
+    throw error;
+  }
+};
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Erro ${response.status}: ${errorText}`);
+export const getAllReviews = async (): Promise<Review[]> => {
+  try {
+    const response = await fetch(
+      getApiUrl('/reviews'),
+      getDefaultOptions('GET')
+    );
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao buscar todas as reviews');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Erro ao buscar todas as reviews:', error);
+    throw error;
   }
 };

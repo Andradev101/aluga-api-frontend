@@ -24,8 +24,8 @@ import { Text } from 'react-native';
 export function Login() {
   const [isLoading, setIsLoading] = React.useState(false);
   
-  const [usernameInputValue, setUsernameInputValue] = React.useState('maria_lee');
-  const [passwordInputValue, setPasswordInputValue] = React.useState('Admin!234');
+  const [usernameInputValue, setUsernameInputValue] = React.useState('');
+  const [passwordInputValue, setPasswordInputValue] = React.useState('');
   
   const [isUsernameInvalid, setIsUsernameInvalid] = React.useState(false);
   const [isPasswordInvalid, setIsPasswordInvalid] = React.useState(false);

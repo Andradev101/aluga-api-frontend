@@ -12,7 +12,7 @@ import React, { useEffect } from 'react';
 import { DatePicker } from './datepicker';
 
 type UserSchemaValue = {
-  value: string;
+  value: string | Date;
   isTouched: boolean;
   invalidStateMsg?: string;
 };
@@ -52,7 +52,7 @@ export function Signup() {
     setIsIntegrationLoading(true)
     let invalidState = false;
     for (const [key, fieldProps] of Object.entries(userSchema)) {
-      console.log(key, [fieldProps.value, fieldProps.isTouched]); 
+ 
       if (!fieldProps.value) {
         setUserSchema((prev) => ({
           ...prev,
@@ -80,7 +80,7 @@ export function Signup() {
   };
 
   async function performRegisterCallout(payload: any) {
-    console.log("payload", payload)
+
     const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
     const options = {
       method: 'POST',
@@ -93,35 +93,28 @@ export function Signup() {
       const response = await fetch(url, options);
       const data = await response.json();
       if(response.ok){
-        console.log("OK");
+
+        alert("Usuário cadastrado com sucesso!");
       } else {
-        console.log(data);
-        console.log(data.detail);
-        data.detail.forEach((element: any) => {
-          console.log(element.loc[1])
-          setUserSchema((prev) => ({
-              ...prev,
-              [element.loc[1]]: { ...prev[element.loc[1]],  invalidStateMsg: element.msg},
-            }))
-          setUserSchema((prev) => ({
-              ...prev,
-              [element.loc[1]]: { ...prev[element.loc[1]],  isTouched: true},
-            }))
-        });
-        // for (const [key, fieldProps] of Object.entries(userSchema)) {
-        //   console.log(key, [fieldProps.value, fieldProps.isTouched]); 
-        //   if (!fieldProps.value) {
-        //     setUserSchema((prev) => ({
-        //       ...prev,
-        //       [key]: { ...prev[key],  isTouched: true},
-        //     }))
-        //     setIsIntegrationLoading(false)
-        //   }
-        // }
+
+        if (Array.isArray(data.detail)) {
+          data.detail.forEach((element: any) => {
+
+            setUserSchema((prev) => ({
+                ...prev,
+                [element.loc[1]]: { ...prev[element.loc[1]],  invalidStateMsg: element.msg},
+              }))
+            setUserSchema((prev) => ({
+                ...prev,
+                [element.loc[1]]: { ...prev[element.loc[1]],  isTouched: true},
+              }))
+          });
+        } else {
+          alert(data.detail || "Erro no cadastro");
+        }
       }
     } catch (error) {
-      console.error("AAAAAAAAAAAAAA");
-      console.log(error);
+      // Silently handle error
     }
   }
 
@@ -131,10 +124,12 @@ export function Signup() {
   }
 
   const handleDateChange = (updatedDate: Date) => {
-    setUserSchema((prev) => ({
-      ...prev,
-      birthDate: { value: updatedDate.toISOString(), isTouched: true },
-    }));
+    if (updatedDate && !isNaN(updatedDate.getTime())) {
+      setUserSchema((prev) => ({
+        ...prev,
+        birthDate: { value: updatedDate.toISOString().split('T')[0], isTouched: true },
+      }));
+    }
   };
   
   async function handleGetUserSchema(){
@@ -149,27 +144,26 @@ export function Signup() {
         const response = await fetch(url, options);
         const data = await response.json();
         if(response.ok){
-          console.log("OK");
-          console.log(data)
+
           let userSchemaFields = Object.keys(data.components.schemas.UserSignup.properties);
           
           //super important, imposes field behavior for every form field
           let userSchemaForm:any = {};
-          userSchemaFields.map((field)=>{ if(field === "birthdate"){
-            return userSchemaForm[field] = { value: new Date(), isTouched: false, invalidStateMsg: "" };
+          userSchemaFields.map((field)=>{ if(field === "birthDate"){
+            return userSchemaForm[field] = { value: "1990-01-01", isTouched: false, invalidStateMsg: "" };
             } else {
               return userSchemaForm[field] = { value: "", isTouched: false, invalidStateMsg: "" };
             }
           })
 
           setUserSchema(userSchemaForm)
-          console.log(data.components.schemas.UserSignup.properties)
+
           setUserSchemaInfo(data.components.schemas.UserSignup.properties)
           setIsUserSchemaReady(true)
         } else {
         }
       } catch (error) {
-        console.log(error);
+        // Silently handle error
       }
     }
   return (
@@ -187,7 +181,7 @@ export function Signup() {
       { isUserSchemaReady &&
         Object.entries(userSchema).map(([key, value])=>{
           const meta = (userSchemaInfo as any)[key]; //god forbid typing
-          console.log(key, userSchema[key])
+
           // console.log(meta)
           if(key === "birthDate") {
             // console.log("birthDate", userSchema[key].value)
@@ -197,7 +191,7 @@ export function Signup() {
                   <FormControlLabel>
                     <FormControlLabelText>Birth Date</FormControlLabelText>
                   </FormControlLabel>
-                    <DatePicker date={!userSchema[key].value ? new Date() : new Date(userSchema[key].value)} onDateChange={handleDateChange} />
+                    <DatePicker date={userSchema[key].value ? new Date(userSchema[key].value) : new Date('1990-01-01')} onDateChange={handleDateChange} />
                   <FormControlHelper>
                     <FormControlHelperText>Your birth date.</FormControlHelperText>
                   </FormControlHelper>
