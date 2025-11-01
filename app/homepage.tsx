@@ -6,17 +6,16 @@ import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
-import { Link as RouterLink, useFocusEffect } from 'expo-router';
+import { router, Link as RouterLink, useFocusEffect } from 'expo-router';
 import React, { useCallback } from 'react';
-import { Text, ScrollView, Image, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
+import { Image, ScrollView, Text, TouchableOpacity } from 'react-native';
 
 export default function HomeScreen() {
   const [userRole, setUserRole] = React.useState('');
   
   async function getCredentials() {
     let result = await Storage.getValueFor("user_role");
-    setUserRole(result != null? result : '');
+    setUserRole(result != null ? result : '');
     console.log(result);
     console.log("it runned");
   }
@@ -52,11 +51,28 @@ export default function HomeScreen() {
           >
             <ButtonText className="text-white font-semibold">🌟 Ver Avaliações de Hotéis</ButtonText>
           </Button>
-          
+
+          {/* 🔹 Novo botão para reservas */}
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onPress={() => router.push('/criarReserva')}
+          >
+            <ButtonText className="text-white font-semibold">📅 Fazer Reserva</ButtonText>
+          </Button>
+
+            {/* 🔹 Novo botão para ver as reservas */}
+          <Button 
+            className="bg-blue-600 hover:bg-blue-700"
+            onPress={() => router.push('/myReservations')}
+          >
+            <ButtonText className="text-white font-semibold"> Visualizar Reservas</ButtonText>
+          </Button>
+
           {userRole === "sysAdmin" &&
             <RouterLink href="/users">
               <LinkText size="lg">Users (admin only)</LinkText>
             </RouterLink>}
+          
           <HStack>
             <GetSelfInfo/>
             <RefreshToken/>
