@@ -16,6 +16,7 @@ interface Reserva {
   room_id: number;
   date_checkin: string;
   date_checkout: string;
+  hotel_name: string;
 }
 
 export default function MyReservations() {
@@ -83,6 +84,7 @@ export default function MyReservations() {
             </Badge>
           </HStack>
 
+          <Text className="text-sm text-gray-600 font-medium">🏨 Hotel {"Exemplo"}</Text>
           <Text className="text-sm text-gray-600 font-medium">🏨 Quarto #{reserva.room_id}</Text>
           <Text className="text-blue-700 font-semibold">{checkin} → {checkout}</Text>
 
