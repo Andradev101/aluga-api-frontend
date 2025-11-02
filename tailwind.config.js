@@ -19,6 +19,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Cores personalizadas Aluga Aí
+        'aluga': {
+          50: '#FFF4E6',
+          100: '#FFE4B3',
+          200: '#FFD480',
+          300: '#FFC44D',
+          400: '#FFB41A',
+          500: '#FF7F00', // Cor principal da logo
+          600: '#E6720A',
+          700: '#CC6600',
+          800: '#B35900',
+          900: '#994D00',
+        },
         primary: {
           0: 'rgb(var(--color-primary-0)/<alpha-value>)',
           50: 'rgb(var(--color-primary-50)/<alpha-value>)',
