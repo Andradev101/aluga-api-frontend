@@ -23,7 +23,7 @@ export default function Confirmacao() {
         <Text style={styles.infoText}>Quarto: {roomName}</Text>
         <Text style={styles.infoText}>Check-in: {checkin}</Text>
         <Text style={styles.infoText}>Check-out: {checkout}</Text>
-        <Text style={styles.infoText}>Total: {total}</Text>
+        <Text style={styles.infoText}>Total: R$ {total}</Text>
       </View>
 
       <TouchableOpacity style={styles.button} onPress={() => router.push('/homepage')}>

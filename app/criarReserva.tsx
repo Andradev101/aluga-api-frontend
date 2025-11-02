@@ -201,7 +201,7 @@ const loadUserData = async () => {
         <Text style={styles.textResumo}><Text style={styles.textBold}>Quarto:</Text> {roomName}</Text>
         <Text style={styles.textResumo}><Text style={styles.textBold}>Datas:</Text> {checkin} - {checkout}</Text>
         <View style={styles.divider} />
-        <Text style={[styles.textResumo, styles.textTotal]}><Text style={styles.textBold}>Total:</Text> {total}</Text>
+        <Text style={[styles.textResumo, styles.textTotal]}><Text style={styles.textBold}>Total:</Text> R$ {total}</Text>
       </View>
 
       {/* 2. Dados do Hóspede */}

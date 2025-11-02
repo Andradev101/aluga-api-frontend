@@ -45,7 +45,7 @@ const HotelCard: React.FC<{ hotel: HotelCardOut }> = ({ hotel }) => {
             // ✅ DADOS DO QUARTO/PREÇO (Mockados por enquanto)
             roomName: MOCK_ROOM_NAME,
             roomId: MOCK_ROOM_ID.toString(),
-            total: MOCK_TOTAL_PRICE,
+            total: hotel.min_price_general,
             
             // ✅ DADOS DE DATA (Mockados por enquanto)
             checkin: MOCK_CHECKIN,
@@ -103,8 +103,6 @@ export default function HotelsScreen() {
 
                 // Chamada à API com filtros padrão (ou sem filtros)
                 const hotelList = await getAllHotels({
-                    sort: 'popularity',
-                    size: 20
                 });
 
                 setHotels(hotelList);
