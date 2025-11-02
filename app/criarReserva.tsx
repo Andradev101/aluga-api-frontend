@@ -1,5 +1,7 @@
+// app/criarReserva.tsx
+
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
@@ -20,14 +22,6 @@ interface DadosReserva {
   checkout: string;
   total: string;
 }
-
-const dadosReservaMock: DadosReserva = {
-  hotel: 'Nome do Hotel Ltda.',
-  quarto: 'Quarto Duplo Econômico',
-  checkin: '20/12/2025',
-  checkout: '30/12/2025',
-  total: 'R$ 1.200,00',
-};
 
 // ✅ Radio Button
 interface RadioButtonProps {
@@ -59,6 +53,10 @@ interface User {
 }
 
 export default function TelaReserva() {
+
+  const params = useLocalSearchParams();
+  const { hotelName, hotelId, roomName, roomId, total, checkin, checkout } = params;
+
   const router = useRouter();
 
   // Estados
@@ -143,9 +141,9 @@ const loadUserData = async () => {
       setLoading(true);
 
       const reservaData = {
-        room_id: 222, // ID do quarto
-        date_checkin: "2025-12-20T14:00:00",
-        date_checkout: "2025-12-30T12:00:00",
+        room_id: roomId,
+        date_checkin: checkin,
+        date_checkout: checkout,
       };
 
       const response = await fetch(`${API_BASE}/reservas`, {
@@ -170,11 +168,11 @@ const loadUserData = async () => {
       router.push({
         pathname: '/confirmacaoReserva',
         params: {
-          hotel: dadosReservaMock.hotel,
-          quarto: dadosReservaMock.quarto,
-          checkin: dadosReservaMock.checkin,
-          checkout: dadosReservaMock.checkout,
-          total: dadosReservaMock.total,
+          hotelName: hotelName,
+          roomName: roomName,
+          checkin: checkin,
+          checkout: checkout,
+          total: total,
           metodo: metodoPagamento,
           nomeHospede: nome,
           reservaId: result.id || 'N/A', // se o backend retornar ID
@@ -198,11 +196,12 @@ const loadUserData = async () => {
         <Text style={styles.sectionTitle}>
           <Ionicons name="receipt-outline" size={18} color="#1E3A8A" /> Resumo da Reserva
         </Text>
-        <Text style={styles.textResumo}><Text style={styles.textBold}>Hotel:</Text> {dadosReservaMock.hotel}</Text>
-        <Text style={styles.textResumo}><Text style={styles.textBold}>Quarto:</Text> {dadosReservaMock.quarto}</Text>
-        <Text style={styles.textResumo}><Text style={styles.textBold}>Datas:</Text> {dadosReservaMock.checkin} - {dadosReservaMock.checkout}</Text>
+        <Text style={styles.textResumo}><Text style={styles.textBold}>Hotel:</Text> {hotelName}</Text>
+        <Text style={styles.textResumo}><Text style={styles.textBold}>Hotel ID:</Text> {hotelId}</Text>
+        <Text style={styles.textResumo}><Text style={styles.textBold}>Quarto:</Text> {roomName}</Text>
+        <Text style={styles.textResumo}><Text style={styles.textBold}>Datas:</Text> {checkin} - {checkout}</Text>
         <View style={styles.divider} />
-        <Text style={[styles.textResumo, styles.textTotal]}><Text style={styles.textBold}>Total:</Text> {dadosReservaMock.total}</Text>
+        <Text style={[styles.textResumo, styles.textTotal]}><Text style={styles.textBold}>Total:</Text> {total}</Text>
       </View>
 
       {/* 2. Dados do Hóspede */}

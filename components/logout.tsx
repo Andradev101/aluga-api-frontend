@@ -7,6 +7,8 @@ export default function Logout() {
   
   async function performLogout() {
     await performLogoutCallout();
+    localStorage.clear();
+    localStorage.removeItem('user_role');
     router.push('/');
   }
   async function performLogoutCallout() {

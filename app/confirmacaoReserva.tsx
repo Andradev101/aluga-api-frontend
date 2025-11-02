@@ -1,10 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // Se estiver usando o roteamento padrão do Expo
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function Confirmacao() {
   const router = useRouter();
+
+    const params = useLocalSearchParams();
+    const { hotelName, hotelId, roomName, roomId, total, checkin, checkout } = params;
 
   return (
     <View style={styles.container}>
@@ -16,11 +19,11 @@ export default function Confirmacao() {
 
       <View style={styles.card}>
         <Text style={styles.infoTitle}>Detalhes da Reserva</Text>
-        <Text style={styles.infoText}>Hotel: Nome do Hotel Ltda.</Text>
-        <Text style={styles.infoText}>Quarto: Quarto Duplo Econômico</Text>
-        <Text style={styles.infoText}>Check-in: 20/12/2025</Text>
-        <Text style={styles.infoText}>Check-out: 30/12/2025</Text>
-        <Text style={styles.infoText}>Total: R$ 1.200,00</Text>
+        <Text style={styles.infoText}>Hotel: {hotelName}</Text>
+        <Text style={styles.infoText}>Quarto: {roomName}</Text>
+        <Text style={styles.infoText}>Check-in: {checkin}</Text>
+        <Text style={styles.infoText}>Check-out: {checkout}</Text>
+        <Text style={styles.infoText}>Total: {total}</Text>
       </View>
 
       <TouchableOpacity style={styles.button} onPress={() => router.push('/homepage')}>
