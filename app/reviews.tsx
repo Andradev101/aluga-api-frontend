@@ -90,16 +90,10 @@ export default function ReviewsScreen() {
   const loadAllReviews = async () => {
     setLoading(true);
     try {
-      // Carrega avaliações de todos os hotéis
-      const allReviewsData = [];
-      for (const hotel of hotels) {
-        try {
-          const hotelReviews = await getHotelReviews(hotel.id.toString());
-          allReviewsData.push(...hotelReviews);
-        } catch (error) {
-          // Silently handle error
-        }
-      }
+      // Usa endpoint único para buscar todas as reviews
+      const { getAllReviews } = await import('@/services/reviews-api');
+      const allReviewsData = await getAllReviews();
+      
       // Ordena por data de criação (mais recente primeiro)
       const sortedReviews = allReviewsData.sort((a: any, b: any) => {
         const dateA = new Date(a.createdAt || a.created_at || a.id).getTime();
