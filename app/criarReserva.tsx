@@ -1,5 +1,3 @@
-// app/criarReserva.tsx
-
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -54,10 +52,26 @@ interface User {
 
 export default function TelaReserva() {
 
-  const params = useLocalSearchParams();
-  const { hotelName, hotelId, roomName, roomId, total, checkin, checkout } = params;
-
+ const params = useLocalSearchParams();
   const router = useRouter();
+
+// 🔹 MOCK para testes (só usado se não vier nada dos params)
+const MOCK_RESERVA: DadosReserva = {
+  hotel: 'Hotel Fazenda Minas',
+  quarto: '"Quarto Casal"',
+  checkin: '2026-01-01',
+  checkout: '2026-02-02',
+  total: '850.00',
+};
+
+// 🔹 Pegando parâmetros da navegação ou usando o mock
+const hotelName = (params.hotelName as string) || MOCK_RESERVA.hotel;
+const hotelId = (params.hotelId as string) || '1';
+const roomName = (params.roomName as string) || MOCK_RESERVA.quarto;
+const roomId = (params.roomId as string) || '101';
+const checkin = (params.checkin as string) || MOCK_RESERVA.checkin;
+const checkout = (params.checkout as string) || MOCK_RESERVA.checkout;
+const total = (params.total as string) || MOCK_RESERVA.total; 
 
   // Estados
   const [nome, setNome] = useState('');
@@ -120,72 +134,75 @@ const loadUserData = async () => {
   }, []);
 
   // Confirmar reserva (ENVIO REAL PARA O BACKEND)
-  const handleConfirmarReserva = async () => {
-    // Validação mínima (só o que é obrigatório)
-    if (!nome || !email) {
-      Alert.alert('Erro', 'Dados do usuário não carregados.');
-      return;
+const handleConfirmarReserva = async () => {
+  console.log('Botão Confirmar Reserva clicado!');
+  if (!nome || !email) {
+    Alert.alert('Erro', 'Dados do usuário não carregados.');
+    return;
+  }
+
+  if (!aceitaTermos) {
+    Alert.alert('Erro', 'Você precisa aceitar os Termos e Condições.');
+    return;
+  }
+
+  if (metodoPagamento === 'cartao' && (!numCartao || !nomeCartao || !cvv)) {
+    Alert.alert('Erro', 'Preencha os dados do cartão.');
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    const reservaData = {
+      hotel_id: Number(hotelId),
+      room_id: Number(roomId),
+      check_in: checkin,
+      check_out: checkout,
+      rooms_booked: 1, // pode ajustar conforme a lógica futura
+    };
+
+    const response = await fetch(`${API_BASE}/bookings`, {
+      method: 'POST',
+      credentials: 'include', // envia o cookie de sessão
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(reservaData),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Erro na resposta:', response.status, errorText);
+      throw new Error(`Erro ${response.status}: Falha ao criar reserva`);
     }
 
-    if (!aceitaTermos) {
-      Alert.alert('Erro', 'Você precisa aceitar os Termos e Condições.');
-      return;
-    }
+    const result = await response.json();
+    console.log('Reserva criada com sucesso:', result);
 
-    if (metodoPagamento === 'cartao' && (!numCartao || !nomeCartao || !cvv)) {
-      Alert.alert('Erro', 'Preencha os dados do cartão.');
-      return;
-    }
+    Alert.alert('Sucesso', 'Reserva confirmada com sucesso!');
 
-    try {
-      setLoading(true);
-
-      const reservaData = {
-        room_id: roomId,
-        date_checkin: checkin,
-        date_checkout: checkout,
-      };
-
-      const response = await fetch(`${API_BASE}/reservas`, {
-        method: 'POST',
-        credentials: 'include', // Envia cookie de sessão
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(reservaData),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Erro na resposta:', response.status, errorText);
-        throw new Error(`Erro ${response.status}: Falha ao criar reserva`);
-      }
-
-      const result = await response.json();
-      console.log('Reserva criada com sucesso:', result);
-
-      // Redireciona com os dados da reserva
-      router.push({
-        pathname: '/confirmacaoReserva',
-        params: {
-          hotelName: hotelName,
-          roomName: roomName,
-          checkin: checkin,
-          checkout: checkout,
-          total: total,
-          metodo: metodoPagamento,
-          nomeHospede: nome,
-          reservaId: result.id || 'N/A', // se o backend retornar ID
-        },
-      });
-
-    } catch (err: any) {
-      console.error('Erro ao confirmar reserva:', err);
-      Alert.alert('Erro', err.message || 'Não foi possível confirmar a reserva. Tente novamente.');
-    } finally {
-      setLoading(false);
-    }
-  };
+    // Redireciona para tela de confirmação
+    router.push({
+      pathname: '/confirmacaoReserva',
+      params: {
+        hotelName,
+        roomName,
+        checkin,
+        checkout,
+        total,
+        metodo: metodoPagamento,
+        nomeHospede: nome,
+        reservaId: result.id || 'N/A',
+      },
+    });
+  } catch (err: any) {
+    console.error('Erro ao confirmar reserva:', err);
+    Alert.alert('Erro', err.message || 'Não foi possível confirmar a reserva.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>

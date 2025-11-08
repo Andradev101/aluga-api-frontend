@@ -1,7 +1,5 @@
-// app/reservationDetails.tsx
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function ReservationDetails() {
@@ -10,9 +8,15 @@ export default function ReservationDetails() {
 
   const {
     reservaId,
-    room_id,
+    hotelName,
+    hotelCity,
+    hotelStars,
+    roomName,
+    roomType,
+    roomPrice,
     date_checkin,
-    date_checkout
+    date_checkout,
+    rooms_booked,
   } = params;
 
   const formatarData = (iso: string | undefined) => {
@@ -22,8 +26,6 @@ export default function ReservationDetails() {
       day: '2-digit',
       month: 'long',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -39,22 +41,30 @@ export default function ReservationDetails() {
       <View style={styles.card}>
         <View style={styles.section}>
           <Text style={styles.label}>ID da Reserva</Text>
-          <Text style={styles.value}>{reservaId || 'N/A'}</Text>
+          <Text style={styles.value}>{reservaId}</Text>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.label}>Hotel</Text>
+          <Text style={styles.value}>{hotelName} ({hotelCity})</Text>
+          <Text style={styles.subValue}>⭐ {hotelStars} estrelas</Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.label}>Quarto</Text>
-          <Text style={styles.value}>#{room_id || 'N/A'}</Text>
+          <Text style={styles.value}>{roomName}</Text>
+          <Text style={styles.subValue}>{roomType} - R$ {roomPrice}/noite</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Check-in</Text>
-          <Text style={styles.value}>{formatarData(date_checkin as string)}</Text>
+          <Text style={styles.label}>Período</Text>
+          <Text style={styles.value}>Check-in: {formatarData(date_checkin as string)}</Text>
+          <Text style={styles.value}>Check-out: {formatarData(date_checkout as string)}</Text>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.label}>Check-out</Text>
-          <Text style={styles.value}>{formatarData(date_checkout as string)}</Text>
+          <Text style={styles.label}>Quartos reservados</Text>
+          <Text style={styles.value}>{rooms_booked}</Text>
         </View>
 
         <View style={styles.statusContainer}>
