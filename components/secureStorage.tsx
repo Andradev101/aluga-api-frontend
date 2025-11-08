@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
-// ✅ Salvar valor
 export async function save(key: string, value: string): Promise<void> {
   try {
     if (Platform.OS === 'web') {
@@ -15,7 +14,6 @@ export async function save(key: string, value: string): Promise<void> {
   }
 }
 
-// ✅ Obter valor
 export async function getValueFor(key: string): Promise<string | null> {
   try {
     if (Platform.OS === 'web') {
@@ -30,3 +28,16 @@ export async function getValueFor(key: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function remove(key: string): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.removeItem(key);
+    } else {
+      await SecureStore.deleteItemAsync(key);
+    }
+  } catch (error) {
+    console.error("Error removing data:", error);
+  }
+}
+

@@ -1,4 +1,5 @@
 
+import * as Storage from '@/components/secureStorage';
 import { Button, ButtonText } from '@/components/ui/button';
 import React from 'react';
 
@@ -22,9 +23,8 @@ export default function RefreshToken() {
       const data = await response.json();
       console.log(response);
       console.log(data);
-      if(!response.ok){
-        // setIsLoginError(true)
-        // setLoginErrorMsg(data.detail? data.detail : "An unexpected error occurred.");
+      if(response.ok){
+        await Storage.save("is_logged_in", "true");
       }
     } catch (error) {
       console.error(error);

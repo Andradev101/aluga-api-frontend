@@ -104,6 +104,7 @@ export function Login() {
       console.log(data);
       if(response.ok){
         await Storage.save("user_role", data.token_content.role);
+        await Storage.save("is_logged_in", "true");
       }
     } catch (error) {
       console.error(error);
