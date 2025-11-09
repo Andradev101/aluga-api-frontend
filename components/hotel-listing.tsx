@@ -1,7 +1,7 @@
 // components/hotel-listing.tsx
 
-import { getAllHotels } from '@/services/hotels-api'; // Assumindo o caminho correto
-import { HotelCardOut } from '@/types/hotels'; // Interface de card
+import { getAllHotels } from '@/services/hotels-api';
+import { HotelCardOut } from '@/types/hotels';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -20,39 +20,20 @@ const HotelCard: React.FC<{ hotel: HotelCardOut }> = ({ hotel }) => {
         return <Text style={styles.stars}>{starIcons} ({hotel.stars?.toFixed(1)})</Text>;
     };
 
-
-    // Função para lidar com o clique de reserva e enviar os parâmetros
-  const handleReserve = (e: any) => {
-    // Importante: impede que o TouchableOpacity pai (que navega para os detalhes do hotel) seja acionado
-    e.stopPropagation(); 
-    
-    // Configura um preço e dados de quarto MOCKADOS para que a tela de Reserva tenha o que exibir.
-    // Em um fluxo real, esses dados viriam de uma API ou de um formulário de filtro.
-    const MOCK_ROOM_ID = 222; 
-    const MOCK_ROOM_NAME = 'Quarto Duplo Econômico';
-    const MOCK_CHECKIN = '2025-12-20'; // Formato ISO para facilitar o POST
-    const MOCK_CHECKOUT = '2025-12-30';
-    // const MOCK_TOTAL_PRICE = displayPrice ? `R$ ${displayPrice.toFixed(2)}` : 'Preço a Confirmar';
-    const MOCK_TOTAL_PRICE = 'R$ 1.200,00';
-
-    router.push({
-        pathname: '/criarReserva',
-        params: {
-            // ✅ DADOS DO HOTEL
-            hotelName: hotel.name,
-            hotelId: hotel.id.toString(), // Converter para string é uma boa prática em params
-            
-            // ✅ DADOS DO QUARTO/PREÇO (Mockados por enquanto)
-            roomName: MOCK_ROOM_NAME,
-            roomId: MOCK_ROOM_ID.toString(),
-            total: hotel.min_price_general,
-            
-            // ✅ DADOS DE DATA (Mockados por enquanto)
-            checkin: MOCK_CHECKIN,
-            checkout: MOCK_CHECKOUT,
-        },
-    });
-  };
+    // Função para lidar com o clique de reserva - agora só passa o hotel
+    const handleReserve = (e: any) => {
+        // Impede que o TouchableOpacity pai seja acionado
+        e.stopPropagation(); 
+        
+        // Navega para a tela de reserva passando apenas os dados do hotel
+        router.push({
+            pathname: '/criarReserva',
+            params: {
+                hotelName: hotel.name,
+                hotelId: hotel.id.toString(),
+            },
+        });
+    };
 
     return (
         <TouchableOpacity
@@ -76,18 +57,17 @@ const HotelCard: React.FC<{ hotel: HotelCardOut }> = ({ hotel }) => {
                 <Text style={styles.price}>
                     {displayPrice ? `A partir de R$ ${displayPrice.toFixed(2)}` : 'Preço indisponível'}
                 </Text>
-                {/* 🔹 Novo botão para reservas */}
+                {/* Botão para fazer reserva */}
                 <Button
                     className="bg-blue-600 hover:bg-blue-700"
                     onPress={handleReserve}
-        >
-                <ButtonText className="text-white font-semibold">📅 Fazer Reserva</ButtonText>
-            </Button>
-        </View>
-    </TouchableOpacity >
-  );
+                >
+                    <ButtonText className="text-white font-semibold">📅 Fazer Reserva</ButtonText>
+                </Button>
+            </View>
+        </TouchableOpacity>
+    );
 };
-
 
 // --- Tela Principal de Hotéis ---
 export default function HotelsScreen() {
@@ -102,8 +82,7 @@ export default function HotelsScreen() {
                 setError(null);
 
                 // Chamada à API com filtros padrão (ou sem filtros)
-                const hotelList = await getAllHotels({
-                });
+                const hotelList = await getAllHotels({});
 
                 setHotels(hotelList);
             } catch (err) {
@@ -120,7 +99,7 @@ export default function HotelsScreen() {
     if (loading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#f97316" />
+                <ActivityIndicator size="large" color="#1E3A8A" />
                 <Text style={styles.loadingText}>Buscando os melhores hotéis...</Text>
             </View>
         );
@@ -156,8 +135,6 @@ export default function HotelsScreen() {
         />
     );
 }
-
-
 
 // --- Estilos ---
 const styles = StyleSheet.create({
@@ -222,7 +199,7 @@ const styles = StyleSheet.create({
     price: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#dc2626', // Vermelho para destacar o preço
+        color: '#dc2626',
         marginTop: 5,
     },
     centerContainer: {

@@ -2,6 +2,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+// ✅ FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
+const localISOStringToDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
+};
+
 export default function ReservationDetails() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -21,7 +27,7 @@ export default function ReservationDetails() {
 
   const formatarData = (iso: string | undefined) => {
     if (!iso) return 'N/A';
-    const date = new Date(iso);
+    const date = localISOStringToDate(iso);
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'long',
@@ -93,6 +99,7 @@ const styles = StyleSheet.create({
   section: { marginBottom: 16 },
   label: { fontSize: 14, color: '#6B7280', marginBottom: 4 },
   value: { fontSize: 16, color: '#1F2937', fontWeight: '600' },
+  subValue: { fontSize: 14, color: '#6B7280', marginTop: 2 },
   statusContainer: { alignItems: 'center', marginTop: 10 },
   statusBadge: { backgroundColor: '#DCFCE7', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20 },
   statusText: { color: '#166534', fontWeight: '600', fontSize: 14 },
