@@ -1,4 +1,7 @@
 import ModalComponent from "@/components/modal";
+import { Box } from "@/components/ui/box";
+import { SearchIcon } from '@/components/ui/icon';
+import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
@@ -9,12 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VStack } from "@/components/ui/vstack";
+import { useAuthContext } from "@/context/AuthContext";
 import { useAuth } from "@/hooks/useAuth";
 import React, { useEffect } from "react";
 import { ScrollView } from "react-native";
-import { useAuthContext } from "../../context/AuthContext";
 
-export default function HomeScreen() {
+export function ManageUsers() {
   //protected route user data
   const { isAuthenticated, userData, loading } = useAuthContext();
   const { fetchUserData } = useAuth();
@@ -80,7 +83,7 @@ export default function HomeScreen() {
     return (
       <>
         {tableData.map((item: any, index: any) => (
-          <TableRow key={index}>
+          <TableRow key={item.userName}>
             {/* <TableData className='w-[150px]'>{item.id}</TableData> */}
             <TableData className="min-w-[100px]">{item.userName}</TableData>
             {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
@@ -102,6 +105,13 @@ export default function HomeScreen() {
 
   return (
     <VStack>
+      <Input>
+        <InputSlot className="pl-3">
+          <InputIcon as={SearchIcon} />
+        </InputSlot>
+        <InputField placeholder="Search user by username" />
+      </Input>
+      {!renderTable && <Spinner size="large" color="grey" />}
       <ScrollView>
         <Table className="w-full">
           <TableHeader>
@@ -109,8 +119,11 @@ export default function HomeScreen() {
                 {renderTable && defineTableHead(tableHeadFields)}
               </TableRow> */}
           </TableHeader>
-          {!renderTable && <Spinner size="large" color="grey" />}
-          <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
+          <Box className="w-full">
+            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
+            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
+            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
+          </Box>
         </Table>
       </ScrollView>
     </VStack>

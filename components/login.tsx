@@ -1,4 +1,3 @@
-import * as Storage from '@/components/secureStorage';
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import {
   FormControl,
@@ -16,12 +15,23 @@ import { AlertCircleIcon, EyeIcon, EyeOffIcon } from '@/components/ui/icon';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
+import { useAuth } from '@/hooks/useAuth';
 import { router, Link as RouterLink } from 'expo-router';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Text } from 'react-native';
 
 
+
 export function Login() {
+  const { login, userData, isAuthenticated } = useAuth()
+  
+  useEffect(() => {
+    if(isAuthenticated) {
+      router.push("/homepage")
+    }
+    // console.log("userData updated login component:", userData);
+  }, [isAuthenticated]);
+  // const { refreshUser } = useAuthContext();
   const [isLoading, setIsLoading] = React.useState(false);
   
   const [usernameInputValue, setUsernameInputValue] = React.useState('');
@@ -54,62 +64,17 @@ export function Login() {
       setIsLoading(false);
       return;
     }
-    
-    let loginRes = await performLoginCallout(usernameInputValue, passwordInputValue);
-    await performGetCredentials();
-    if(loginRes) router.push('/homepage')
+    let loginRes = await login(usernameInputValue, passwordInputValue);
+    let loginResBody = await loginRes.response.json()
+    if(loginRes.ok){
+      //awaits for the userData value in a useEffect hook to return to perform the router push
+    } else {
+      console.log(loginResBody)
+      setIsLoginError(true)
+      setLoginErrorMsg(loginResBody?.detail? loginResBody?.detail : "An unexpected error occurred.");
+    }
     setIsLoading(false)
   };
-
-  async function performLoginCallout(username: string, password: string) {
-    const url = `${process.env.EXPO_PUBLIC_API_URL}/login`;
-    
-    const options = {
-      method: 'POST',
-      credentials: 'include' as RequestCredentials,
-      headers: {'content-type': 'application/json'},
-      body: JSON.stringify({userName: username, password: password})
-    };
-
-    try {
-      const response = await fetch(url, options);
-      const data = await response.json();
-      console.log(response);
-      console.log(data);
-      if(!response.ok){
-        setIsLoginError(true)
-        setLoginErrorMsg(data.detail? data.detail : "An unexpected error occurred.");
-        return false;
-      }
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  }
-
-  async function performGetCredentials() {
-    const url = `${process.env.EXPO_PUBLIC_API_URL}/credentials`;
-    
-    const options = {
-      method: 'GET',
-      credentials: 'include' as RequestCredentials,
-      headers: {'content-type': 'application/json'},
-    };
-
-    try {
-      const response = await fetch(url, options);
-      const data = await response.json();
-      console.log(response);
-      console.log(data);
-      if(response.ok){
-        await Storage.save("user_role", data.token_content.role);
-        await Storage.save("is_logged_in", "true");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
 
   return (
       <VStack>

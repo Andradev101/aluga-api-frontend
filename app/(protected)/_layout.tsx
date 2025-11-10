@@ -1,25 +1,41 @@
-import { Redirect, Stack } from 'expo-router';
-import React from 'react';
-import { ActivityIndicator, View } from 'react-native';
-import { useAuth } from '../../hooks/useAuth';
+import { UserNav } from "@/components/userNav";
+import { useAuth } from "@/hooks/useAuth";
+import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProtectedLayout() {
-  const { isAuthenticated, loading, userData } = useAuth();
+  const { isAuthenticated, loading, userData, logout, fetchUserData } = useAuth();
 
-  if (loading) {
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  if (loading || isAuthenticated === null) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={styles.center}>
         <ActivityIndicator />
       </View>
     );
   }
 
   if (!isAuthenticated) {
-    // not logged in → redirect to login
-    return <Redirect href="/" />;
+    // Don't render anything while redirecting
+    return null;
   }
 
-  // logged in → allow access to protected routes
-  console.log("intercepted by the layout guard")
-  return <Stack />;
+  return (
+    <SafeAreaProvider>
+      <SafeAreaView edges={["top"]} style={styles.container}>
+        <UserNav userData={userData} logout={logout} />
+        <Stack />
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+});
