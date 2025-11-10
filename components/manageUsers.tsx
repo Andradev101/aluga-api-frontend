@@ -1,5 +1,4 @@
 import ModalComponent from "@/components/modal";
-import { Box } from "@/components/ui/box";
 import { SearchIcon } from '@/components/ui/icon';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Spinner } from "@/components/ui/spinner";
@@ -89,7 +88,7 @@ export function ManageUsers() {
             {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
             <TableData className="min-w-[100px]">{item.role}</TableData>
             <TableData className="min-w-[100px]">
-              <ModalComponent content={item} />
+              <ModalComponent content={item} buttonName="Details" variant="admin" />
             </TableData>
             {/* <TableData className='w-[150px]'>{item.birthDate}</TableData> */}
             {/* <TableData className="w-[250px]">{item.emailAddress}</TableData> */}
@@ -119,11 +118,7 @@ export function ManageUsers() {
                 {renderTable && defineTableHead(tableHeadFields)}
               </TableRow> */}
           </TableHeader>
-          <Box className="w-full">
-            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
-            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
-            <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>
-          </Box>
+          <TableBody className="w-full">{renderTable && defineTableBody(tableBodyRows)}</TableBody>
         </Table>
       </ScrollView>
     </VStack>

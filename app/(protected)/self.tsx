@@ -1,30 +1,93 @@
+import ModalComponent from '@/components/modal';
+import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
-import { useAuthContext } from '@/context/AuthContext';
 import { useAuth } from '@/hooks/useAuth';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView } from 'react-native';
+interface User {
+  id: string;
+  userName: string;
+  role: string;
+  birthDate: string;
+  emailAddress: string;
+  phoneNumber: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+}
 
 export default function Self() {
-  const { isAuthenticated, userData, loading } = useAuthContext();
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [user, setUser] = React.useState<User | null>(null);
   const { fetchUserData } = useAuth();
-  useEffect(() => {
+    useEffect(() => {
+      setIsLoading(true)
       const fetchAndCall = async () => {
         try {
           await fetchUserData();
+          let res = await performUserSelfInfoCallout();
+          let resBody = await res.json()
+          setUser(resBody)
         } catch (error) {
           console.error("Error fetching user data:", error);
+        } finally {
+          setIsLoading(false);
         }
       };
-  
       fetchAndCall();
-    }, [isAuthenticated, userData, loading]);
-  
+    }, []);
+ 
   return (
-    <ScrollView className="flex-1 bg-gray-50">
-      <VStack className="p-6 gap-6">
-        <Text>self</Text>
-      </VStack>
-    </ScrollView>
+    <>
+      {isLoading && <ButtonSpinner color="gray" />}
+      <ScrollView className="flex-1 bg-gray-50">
+        <VStack className="p-2 gap-2">
+          {!isLoading &&
+            <Card size="lg" variant="outline" className="m-1">
+              <Heading size="4xl" className="mb-1">
+                Welcome, {user?.firstName} {user?.lastName}!
+              </Heading>
+              <Divider></Divider>
+              <Text size="lg">Here you can manage your:</Text>
+              
+              {/* <HStack className="gap-2"> */}
+              
+                {user && (
+                  <Button variant="solid" size="md" action="primary">
+                    <ModalComponent content={user} buttonName="Personal information" variant="self" />
+                  </Button>
+                )}
+                <Button variant="solid" size="md" action="primary">
+                  <ButtonText>Payment information</ButtonText>
+                </Button>
+                <Button variant="solid" size="md" action="primary">
+                  <ButtonText>Bookings</ButtonText>
+                </Button>
+                <Button variant="solid" size="md" action="primary">
+                  <ButtonText>Reviews</ButtonText>
+                </Button>
+              {/* </HStack> */}
+
+            </Card>
+          }
+        </VStack>
+      </ScrollView>
+    </>
   );
+}
+
+async function performUserSelfInfoCallout() {
+  const url = `${process.env.EXPO_PUBLIC_API_URL}/users/me`;
+  
+  const options = {
+    method: 'GET',
+    credentials: 'include' as RequestCredentials,
+    headers: {'content-type': 'application/json'},
+  };
+  let response = await fetch(url, options);
+  return response
 }

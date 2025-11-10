@@ -24,53 +24,55 @@ interface Dependencies {
 
 export function UserNav({ userData, logout }: Dependencies) {
   return (
-    <HStack space="md" reversed={false}>
+    <HStack className='justify-between bg-primary-500'>
       <Pressable
         onPress={() => router.push("/homepage")}
         className="p-4 bg-primary-500"
       >
         <Text className="text-typography-0">Logo</Text>
       </Pressable>
-        <Menu
-            placement="bottom right"
-            offset={5}
-            disabledKeys={["Welcome"]}
-            trigger={({ ...triggerProps }) => {
-              return (
-                <Pressable {...triggerProps}
-                  className="p-4 bg-primary-500"
-                >
-                  <HStack space="md" reversed={false}>
-                    <Avatar size="sm">
-                      <AvatarFallbackText>{userData?.token_content?.id}</AvatarFallbackText>
-                      <AvatarBadge />
-                    </Avatar>
-                    <Text className="text-typography-0">{(userData?.token_content?.id).substring(0,8)}</Text>
-                    <Icon as={ChevronDownIcon} size="lg" className="text-typography-0"/>
-                  </HStack>
-                </Pressable>
-              );
-            }}
-          >
-        {
-          userData?.token_content?.role === "sysAdmin" &&
-          <>
-            <MenuItem key="Admin Page" textValue="Admin Page" onPress={() => router.push("/admin")}>
-              <Icon as={StarIcon} size="sm" className="mr-2" />
-              <MenuItemLabel size="sm">Admin Page</MenuItemLabel>
-            </MenuItem>
-            <MenuSeparator />
-          </>
-        }
-          <MenuItem key="Your Profile" textValue="Your Profile" onPress={() => {router.push("/self")}}>
-            <Icon as={EditIcon} size="sm" className="mr-2" />
-            <MenuItemLabel size="sm">Your Profile</MenuItemLabel>
+
+      <Menu
+          placement="bottom right"
+          offset={5}
+          disabledKeys={["Welcome"]}
+          trigger={({ ...triggerProps }) => {
+            return (
+              <Pressable {...triggerProps}
+                className="p-4 bg-primary-500"
+              >
+                <HStack space="md" reversed={false}>
+                  <Avatar size="sm">
+                    <AvatarFallbackText>{userData?.token_content?.userName}</AvatarFallbackText>
+                    <AvatarBadge />
+                  </Avatar>
+                  <Text className="text-typography-0">{(userData?.token_content?.userName)}</Text>
+                  <Icon as={ChevronDownIcon} size="lg" className="text-typography-0"/>
+                </HStack>
+              </Pressable>
+            );
+          }}
+        >
+      {
+        userData?.token_content?.role === "sysAdmin" &&
+        <>
+          <MenuItem key="Admin Page" textValue="Admin Page" onPress={() => router.push("/admin")}>
+            <Icon as={StarIcon} size="sm" className="mr-2" />
+            <MenuItemLabel size="sm">Admin Page</MenuItemLabel>
           </MenuItem>
-          <MenuItem key="Logout" textValue="Logout" onPress={() => logout()}>
-            <Icon as={CloseCircleIcon} size="sm" className="mr-2" />
-            <MenuItemLabel size="sm">Logout</MenuItemLabel>
-          </MenuItem>
-        </Menu>
+          <MenuSeparator />
+        </>
+      }
+        <MenuItem key="My Profile" textValue="My Profile" onPress={() => {router.push("/self")}}>
+          <Icon as={EditIcon} size="sm" className="mr-2" />
+          <MenuItemLabel size="sm">My Profile</MenuItemLabel>
+        </MenuItem>
+        <MenuSeparator />
+        <MenuItem key="Logout" textValue="Logout" onPress={() => logout()}>
+          <Icon as={CloseCircleIcon} size="sm" className="mr-2" />
+          <MenuItemLabel size="sm">Logout</MenuItemLabel>
+        </MenuItem>
+      </Menu>
     </HStack>
   );
 }

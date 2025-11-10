@@ -16,21 +16,31 @@ import React, { useState } from 'react';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 
-export default function ModalComponent({ content }: { content: any }) {
+export default function ModalComponent({ content, buttonName, variant }: { content: any, buttonName: string, variant: "admin" | "self" }) {
   const [isFormEditable, setIsFormEditable] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
   let backupContent = content;
-  const [form, setForm] = React.useState({
-      userName: { value: content.userName, isTouched: false },
-      password: { value: content.password, isTouched: false },
-      birthDate: { value: content.birthDate, isTouched: false },
-      emailAddress: { value: content.emailAddress, isTouched: false },
-      phoneNumber: { value: content.phoneNumber, isTouched: false },
-      firstName: { value: content.firstName, isTouched: false },
-      lastName: { value: content.lastName, isTouched: false },
-      address: { value: content.address, isTouched: false },
-    });
+  //this could be done using a context-based backend callout
+  const formFieldsByVariant: Record<"admin" | "self", string[]> = {
+    admin: [ "userName", "password", "birthDate", "emailAddress", "phoneNumber", "firstName", "lastName", "address"],
+    self: ["emailAddress", "phoneNumber"]
+  };
+  console.log("Modal variant:", variant);
+  // const initialForm = formFieldsByVariant[variant].reduce(
+  //   (acc, key) => {
+  //     acc[key] = { value: content[key] ?? "", isTouched: false };
+  //     return acc;
+  //   },
+  //   {} as Record<string, { value: any; isTouched: boolean }>
+  // );
+  const [form, setForm] = React.useState(() => {
+    const variantFields = formFieldsByVariant[variant] ?? formFieldsByVariant["admin"];
+    return variantFields.reduce((acc, key) => {
+      acc[key] = { value: content[key] ?? "", isTouched: false };
+      return acc;
+    }, {} as Record<string, { value: any; isTouched: boolean }>);
+  });
   type FormField = keyof typeof form;
   const fields: FormField[] = Object.keys(form) as FormField[];
 
@@ -74,7 +84,7 @@ export default function ModalComponent({ content }: { content: any }) {
     <SafeAreaProvider>
       <SafeAreaView>
         <Button onPress={handleOpenModal}>
-          <ButtonText>Details</ButtonText>
+          <ButtonText>{buttonName ? buttonName : "Details"}</ButtonText>
         </Button>
       </SafeAreaView>
 
@@ -131,6 +141,12 @@ export default function ModalComponent({ content }: { content: any }) {
               action="secondary">
                 <ButtonText onPress={logForm}>Log</ButtonText>
               </Button> }
+              
+              { isFormEditable && <Button
+              action="primary">
+                <ButtonText onPress={logForm}>Update</ButtonText>
+              </Button> }
+              
               { isFormEditable && <Button
               action="negative">
                 <ButtonText onPress={handleCancelEditState}>Cancel</ButtonText>
