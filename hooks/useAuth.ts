@@ -50,7 +50,7 @@ export function useAuth() {
       console.error('Auth check failed', err);
       setUserData(null);
       setIsAuthenticated(false);
-      // router.push("/")
+      router.push("/")
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ async function performRefreshToken() {
 
 async function performCredentialsCallout() {
   const url = `${process.env.EXPO_PUBLIC_API_URL}/credentials`;
-  return fetch(url, { credentials: 'include' });
+  return fetch(url, { method: 'GET', credentials: 'include' });
 }
 
 async function performLoginCallout(username: string, password: string) {

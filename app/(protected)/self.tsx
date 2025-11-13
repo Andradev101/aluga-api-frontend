@@ -8,6 +8,7 @@ import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
 import React, { useEffect } from 'react';
 import { ScrollView } from 'react-native';
+
 interface User {
   id: string;
   userName: string;
@@ -48,14 +49,13 @@ export default function Self() {
         <VStack className="p-2 gap-2">
           {!isLoading &&
             <Card size="lg" variant="outline" className="m-1">
-              <Heading size="4xl" className="mb-1">
+              <Heading size="4xl" className="mb-1 p-2j">
                 Welcome, {user?.firstName} {user?.lastName}!
               </Heading>
               <Divider></Divider>
-              <Text size="lg">Here you can manage your:</Text>
+              <Text size="lg" className="p-2">Here you can manage your:</Text>
               
-              {/* <HStack className="gap-2"> */}
-              
+              <VStack className="gap-2">
                 {user && (
                   <Button variant="solid" size="md" action="primary">
                     <ModalComponent content={user} buttonName="Personal information" variant="self" />
@@ -70,8 +70,7 @@ export default function Self() {
                 <Button variant="solid" size="md" action="primary">
                   <ButtonText>Reviews</ButtonText>
                 </Button>
-              {/* </HStack> */}
-
+              </VStack>
             </Card>
           }
         </VStack>

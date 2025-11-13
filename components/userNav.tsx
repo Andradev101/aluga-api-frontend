@@ -60,6 +60,11 @@ export function UserNav({ userData, logout }: Dependencies) {
             <Icon as={StarIcon} size="sm" className="mr-2" />
             <MenuItemLabel size="sm">Admin Page</MenuItemLabel>
           </MenuItem>
+
+          <MenuItem key="auth route" textValue="auth route" onPress={() => router.push("/authrouteexample")}>
+            <Icon as={CloseCircleIcon} size="sm" className="mr-2" />
+            <MenuItemLabel size="sm">auth route</MenuItemLabel>
+          </MenuItem>
           <MenuSeparator />
         </>
       }

@@ -17,21 +17,14 @@ import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
 import { router, Link as RouterLink } from 'expo-router';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Text } from 'react-native';
 
 
 
 export function Login() {
-  const { login, userData, isAuthenticated } = useAuth()
+  const { login } = useAuth()
   
-  useEffect(() => {
-    if(isAuthenticated) {
-      router.push("/homepage")
-    }
-    // console.log("userData updated login component:", userData);
-  }, [isAuthenticated]);
-  // const { refreshUser } = useAuthContext();
   const [isLoading, setIsLoading] = React.useState(false);
   
   const [usernameInputValue, setUsernameInputValue] = React.useState('');
@@ -68,6 +61,7 @@ export function Login() {
     let loginResBody = await loginRes.response.json()
     if(loginRes.ok){
       //awaits for the userData value in a useEffect hook to return to perform the router push
+      router.push("/homepage")
     } else {
       console.log(loginResBody)
       setIsLoginError(true)

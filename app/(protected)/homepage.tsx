@@ -1,12 +1,7 @@
-import GetSelfInfo from '@/components/getselfinfo';
-import Logout from '@/components/logout';
-import RefreshToken from '@/components/refreshtoken';
 import { Button, ButtonText } from '@/components/ui/button';
-import { HStack } from '@/components/ui/hstack';
-import { LinkText } from '@/components/ui/link';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
-import { router, Link as RouterLink } from 'expo-router';
+import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { Image, ScrollView, Text, TouchableOpacity } from 'react-native';
 
@@ -83,18 +78,6 @@ export default function HomeScreen() {
           >
             <ButtonText className="text-white font-semibold"> Visualizar Reservas</ButtonText>
           </Button>
-
-          { userData?.token_content?.role === "sysAdmin" &&
-            <RouterLink href="/users">
-              <LinkText size="lg">Users (admin only)</LinkText>
-            </RouterLink>
-          }
-
-          <HStack>
-            <GetSelfInfo/>
-            <RefreshToken/>
-            <Logout/>
-          </HStack>
           {/* <HotelsScreen/> */}
         </VStack>
       </VStack>

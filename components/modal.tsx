@@ -1,7 +1,13 @@
-import { Button, ButtonGroup, ButtonText } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
-import { CloseIcon, Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import {
+  Button,
+  ButtonGroup,
+  ButtonSpinner,
+  ButtonText,
+} from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
   ModalBackdrop,
@@ -10,23 +16,43 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from '@/components/ui/modal';
-import { Text } from '@/components/ui/text';
-import React, { useState } from 'react';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+} from "@/components/ui/modal";
+import { Text } from "@/components/ui/text";
+import React, { useState } from "react";
+import { Platform } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-
-export default function ModalComponent({ content, buttonName, variant }: { content: any, buttonName: string, variant: "admin" | "self" }) {
+export default function ModalComponent({
+  content,
+  buttonName,
+  variant,
+}: {
+  content: any;
+  buttonName: string;
+  variant: "admin" | "self";
+}) {
   const [isFormEditable, setIsFormEditable] = useState(false);
+  const [isIntegrationLoading, setIsIntegrationLoading] = useState(false);
+  const [updateUserCalloutLoadingMessage, setUpdateUserCalloutLoadingMessage] =
+    useState("");
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
   let backupContent = content;
   //this could be done using a context-based backend callout
   const formFieldsByVariant: Record<"admin" | "self", string[]> = {
-    admin: [ "userName", "password", "birthDate", "emailAddress", "phoneNumber", "firstName", "lastName", "address"],
-    self: ["emailAddress", "phoneNumber"]
+    admin: [
+      "userName",
+      "password",
+      "birthDate",
+      "emailAddress",
+      "phoneNumber",
+      "firstName",
+      "lastName",
+      "address",
+    ],
+    self: ["emailAddress", "phoneNumber"],
   };
-  console.log("Modal variant:", variant);
+  // console.log("Modal variant:", variant);
   // const initialForm = formFieldsByVariant[variant].reduce(
   //   (acc, key) => {
   //     acc[key] = { value: content[key] ?? "", isTouched: false };
@@ -35,7 +61,8 @@ export default function ModalComponent({ content, buttonName, variant }: { conte
   //   {} as Record<string, { value: any; isTouched: boolean }>
   // );
   const [form, setForm] = React.useState(() => {
-    const variantFields = formFieldsByVariant[variant] ?? formFieldsByVariant["admin"];
+    const variantFields =
+      formFieldsByVariant[variant] ?? formFieldsByVariant["admin"];
     return variantFields.reduce((acc, key) => {
       acc[key] = { value: content[key] ?? "", isTouched: false };
       return acc;
@@ -43,42 +70,82 @@ export default function ModalComponent({ content, buttonName, variant }: { conte
   });
   type FormField = keyof typeof form;
   const fields: FormField[] = Object.keys(form) as FormField[];
-
+  async function handleUpdateuserCallout() {
+    setIsIntegrationLoading(true);
+    if (variant === "self") {
+      let res = await performUpdateUserSelfInfoCallout(form);
+      let body = await res.json();
+      if (res.ok) {
+        setUpdateUserCalloutLoadingMessage(body.message);
+      } else {
+        let errors: string[] = [];
+        body.detail.forEach((x: any) => {
+          console.log(errors.push(x.loc[0]));
+        });
+        setUpdateUserCalloutLoadingMessage(
+          `ERROR: Please check these fields: [${errors}]`
+        );
+      }
+    } else {
+      let res = await performUpdateUserInfoCallout(form);
+      let body = await res.json();
+      if (res.ok) {
+        setUpdateUserCalloutLoadingMessage(body.message);
+      } else {
+        let errors: string[] = [];
+        body.detail.forEach((x: any) => {
+          console.log(errors.push(x.loc[0]));
+        });
+        setUpdateUserCalloutLoadingMessage(
+          `ERROR: Please check these fields: [${errors}]`
+        );
+      }
+    }
+    setIsIntegrationLoading(false);
+  }
   //open close modal
   function handleOpenModal() {
-    setModalVisible(true)
-    setModalEditable(false)
-    setModalTitle(`User Details`)
+    setModalVisible(true);
+    setModalEditable(false);
+    setModalTitle(`User Details`);
   }
   function handleCloseModal() {
-    setModalVisible(false)
-    setModalEditable(false)
-    setModalTitle(`User Details`)
-    resetFields()
+    setModalVisible(false);
+    setModalEditable(false);
+    setIsIntegrationLoading(false);
+    setUpdateUserCalloutLoadingMessage("");
+    setModalTitle(`User Details`);
+    resetFields();
   }
 
   //states
   function handleEditState() {
-    setModalTitle(`Edit user`)
-    setModalEditable(true)
+    setModalTitle(`Edit user`);
+    setModalEditable(true);
+  }
+
+  function handleRemoveAction() {
+    //
   }
   function handleCancelEditState() {
-    setModalTitle(`User Details`)
-    setModalEditable(false)
-    resetFields()
+    setModalEditable(false);
+    setIsIntegrationLoading(false);
+    setUpdateUserCalloutLoadingMessage("");
+    setModalTitle(`User Details`);
+    resetFields();
   }
 
   //helpers
-  function resetFields(){
-   fields.map((field) => {
-      form[field].value = backupContent[field]
-    })
+  function resetFields() {
+    fields.map((field) => {
+      form[field].value = backupContent[field];
+    });
   }
-  function setModalEditable(value:boolean){
-    setIsFormEditable(value)
+  function setModalEditable(value: boolean) {
+    setIsFormEditable(value);
   }
-  function logForm(){
-    console.log(form)
+  function logForm() {
+    console.log(form);
   }
   return (
     <SafeAreaProvider>
@@ -91,7 +158,7 @@ export default function ModalComponent({ content, buttonName, variant }: { conte
       <Modal
         isOpen={showModal}
         onClose={handleCloseModal}
-        size="sm"
+        size={Platform.OS === "web" ? "md" : "full"}
       >
         <ModalBackdrop />
         <ModalContent>
@@ -102,10 +169,26 @@ export default function ModalComponent({ content, buttonName, variant }: { conte
             </ModalCloseButton>
           </ModalHeader>
           <ModalBody>
+            {!!updateUserCalloutLoadingMessage && (
+              <Alert
+                action={
+                  updateUserCalloutLoadingMessage
+                    .toLowerCase()
+                    .includes("error")
+                    ? "error"
+                    : "success"
+                }
+                variant="solid"
+              >
+                <AlertIcon as={InfoIcon} />
+                <AlertText>{updateUserCalloutLoadingMessage}</AlertText>
+              </Alert>
+            )}
             {fields.map((field, index) => (
               <>
                 <Text key={`text-${index}`}>{field}</Text>
-                <Input key={`input-${index}`}
+                <Input
+                  key={`input-${index}`}
                   variant="outline"
                   size="sm"
                   className="w-full"
@@ -113,49 +196,90 @@ export default function ModalComponent({ content, buttonName, variant }: { conte
                   isInvalid={false}
                   isReadOnly={false}
                 >
-                  <InputField key={`inputfield-${index}`}
+                  <InputField
+                    key={`inputfield-${index}`}
                     value={form[field].value}
                     onChangeText={(text) =>
-                      setForm(prev => ({
+                      setForm((prev) => ({
                         ...prev,
-                        [field]: { ...prev[field], value: text }}))}
+                        [field]: { ...prev[field], value: text },
+                      }))
+                    }
                     onBlur={() =>
-                      setForm(prev => ({
+                      setForm((prev) => ({
                         ...prev,
-                        [field]: { ...prev[field], isTouched: true }}))}
+                        [field]: { ...prev[field], isTouched: true },
+                      }))
+                    }
                   ></InputField>
                 </Input>
               </>
             ))}
           </ModalBody>
           <ModalFooter>
-            
-            <ButtonGroup flexDirection="row">
-              { !isFormEditable && <Button
-              variant="outline"
-              action="primary">
-                <ButtonText onPress={handleEditState}>Edit</ButtonText>
-              </Button> }
-              
-              { isFormEditable && <Button
-              action="secondary">
-                <ButtonText onPress={logForm}>Log</ButtonText>
-              </Button> }
-              
-              { isFormEditable && <Button
-              action="primary">
-                <ButtonText onPress={logForm}>Update</ButtonText>
-              </Button> }
-              
-              { isFormEditable && <Button
+            <ButtonGroup flexDirection="column" className="w-full">
+              {!isFormEditable && (
+                <Button variant="outline" action="primary" onPress={handleEditState}>
+                  <ButtonText >Edit</ButtonText>
+                </Button>
+              )}
+
+              {/* { !isFormEditable && <Button
+              variant="solid"
               action="negative">
-                <ButtonText onPress={handleCancelEditState}>Cancel</ButtonText>
-              </Button> }
+                <ButtonText onPress={handleRemoveAction}>Remove</ButtonText>
+              </Button> } */}
+
+              {isFormEditable && (
+                <Button onPress={handleUpdateuserCallout} action="primary">
+                  <ButtonText>Update</ButtonText>
+                  {isIntegrationLoading && <ButtonSpinner />}
+                </Button>
+              )}
+
+              {isFormEditable && (
+                <Button onPress={handleCancelEditState} action="negative">
+                  <ButtonText>Cancel</ButtonText>
+                </Button>
+              )}
             </ButtonGroup>
-            
           </ModalFooter>
         </ModalContent>
       </Modal>
     </SafeAreaProvider>
   );
+}
+
+async function performUpdateUserSelfInfoCallout(payload: any) {
+  let body: any = {};
+  Object.keys(payload).forEach((element) => {
+    body[element] = payload[element].value;
+  });
+
+  const url = `${process.env.EXPO_PUBLIC_API_URL}/users/me`;
+  const options = {
+    method: "PUT",
+    credentials: "include" as RequestCredentials,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  };
+  let response = await fetch(url, options);
+  return response;
+}
+
+async function performUpdateUserInfoCallout(payload: any) {
+  let body: any = {};
+  Object.keys(payload).forEach((element) => {
+    body[element] = payload[element].value;
+  });
+
+  const url = `${process.env.EXPO_PUBLIC_API_URL}/users/${body.userName}`;
+  const options = {
+    method: "PUT",
+    credentials: "include" as RequestCredentials,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  };
+  let response = await fetch(url, options);
+  return response;
 }

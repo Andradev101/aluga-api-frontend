@@ -1,8 +1,10 @@
+import { Center } from '@/components/ui/center';
+import { Spinner } from '@/components/ui/spinner';
 import { UserNav } from "@/components/userNav";
 import { useAuth } from "@/hooks/useAuth";
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
 export default function ProtectedLayout() {
@@ -14,9 +16,13 @@ export default function ProtectedLayout() {
 
   if (loading || isAuthenticated === null) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator />
-      </View>
+      <SafeAreaProvider>
+        <SafeAreaView edges={["top"]} style={styles.container}>
+          <Center>
+            <Spinner size="large" color="grey" />;
+          </Center>
+        </SafeAreaView>
+      </SafeAreaProvider>
     );
   }
 
