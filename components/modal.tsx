@@ -70,39 +70,36 @@ export default function ModalComponent({
   });
   type FormField = keyof typeof form;
   const fields: FormField[] = Object.keys(form) as FormField[];
-  async function handleUpdateuserCallout() {
+
+  async function handleUpdateUserCallout() {
     setIsIntegrationLoading(true);
-    if (variant === "self") {
-      let res = await performUpdateUserSelfInfoCallout(form);
-      let body = await res.json();
+
+    const processResponse = async (res: Response) => {
+      const body = await res.json();
+
       if (res.ok) {
         setUpdateUserCalloutLoadingMessage(body.message);
       } else {
-        let errors: string[] = [];
-        body.detail.forEach((x: any) => {
-          console.log(errors.push(x.loc[0]));
-        });
+        const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
         setUpdateUserCalloutLoadingMessage(
-          `ERROR: Please check these fields: [${errors}]`
+          `ERROR: Please check these fields: [${errors.join(", ")}]`
         );
       }
-    } else {
-      let res = await performUpdateUserInfoCallout(form);
-      let body = await res.json();
-      if (res.ok) {
-        setUpdateUserCalloutLoadingMessage(body.message);
-      } else {
-        let errors: string[] = [];
-        body.detail.forEach((x: any) => {
-          console.log(errors.push(x.loc[0]));
-        });
-        setUpdateUserCalloutLoadingMessage(
-          `ERROR: Please check these fields: [${errors}]`
-        );
-      }
+    };
+
+    try {
+      let res;
+      if (variant === "self") res = await performUpdateUserSelfInfoCallout(form);
+      else res = await performUpdateUserInfoCallout(form);
+      await processResponse(res);
+    } catch (error) {
+      console.error(error);
+      setUpdateUserCalloutLoadingMessage("An unexpected error occurred.");
+    } finally {
+      setIsIntegrationLoading(false);
     }
-    setIsIntegrationLoading(false);
   }
+
   //open close modal
   function handleOpenModal() {
     setModalVisible(true);
@@ -219,8 +216,12 @@ export default function ModalComponent({
           <ModalFooter>
             <ButtonGroup flexDirection="column" className="w-full">
               {!isFormEditable && (
-                <Button variant="outline" action="primary" onPress={handleEditState}>
-                  <ButtonText >Edit</ButtonText>
+                <Button
+                  variant="outline"
+                  action="primary"
+                  onPress={handleEditState}
+                >
+                  <ButtonText>Edit</ButtonText>
                 </Button>
               )}
 
@@ -231,7 +232,7 @@ export default function ModalComponent({
               </Button> } */}
 
               {isFormEditable && (
-                <Button onPress={handleUpdateuserCallout} action="primary">
+                <Button onPress={handleUpdateUserCallout} action="primary">
                   <ButtonText>Update</ButtonText>
                   {isIntegrationLoading && <ButtonSpinner />}
                 </Button>

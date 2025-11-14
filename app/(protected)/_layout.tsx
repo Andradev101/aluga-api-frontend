@@ -3,7 +3,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { UserNav } from "@/components/userNav";
 import { useAuth } from "@/hooks/useAuth";
 import { Stack } from "expo-router";
-import { useEffect } from "react";
+import { useEffect } from 'react';
 import { StyleSheet } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
@@ -12,7 +12,7 @@ export default function ProtectedLayout() {
 
   useEffect(() => {
     fetchUserData();
-  }, []);
+  }, [fetchUserData]);
 
   if (loading || isAuthenticated === null) {
     return (

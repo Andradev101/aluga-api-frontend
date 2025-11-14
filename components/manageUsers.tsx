@@ -1,7 +1,7 @@
 import ModalComponent from "@/components/modal";
 import { Card } from "@/components/ui/card";
 import { Heading } from '@/components/ui/heading';
-import { SearchIcon, TrashIcon } from '@/components/ui/icon';
+import { RepeatIcon, SearchIcon, TrashIcon } from '@/components/ui/icon';
 import { Input, InputField, InputIcon, InputSlot } from '@/components/ui/input';
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -13,14 +13,18 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VStack } from "@/components/ui/vstack";
+import { CircleAlert } from "lucide-react-native";
 import React, { useEffect } from "react";
 import { ScrollView } from "react-native";
 import { AlertComponent } from "./alert";
-import { Button, ButtonIcon } from "./ui/button";
+import { Alert, AlertIcon } from "./ui/alert";
+import { Button, ButtonIcon, ButtonSpinner } from "./ui/button";
 import { Center } from "./ui/center";
+import { HStack } from "./ui/hstack";
 
 
 export function ManageUsers() {
+
   useEffect(() => {
     const fetchAndCall = async () => {
       try {
@@ -39,6 +43,8 @@ export function ManageUsers() {
   const [filteredTableRows, setFilteredTableRows] = React.useState([])
   const [filterValue, setFilterValue] = React.useState("");
   const [renderTable, setRenderTable] = React.useState(false);
+  const [isIntegrationLoading, setIsIntegrationLoading] = React.useState(false);
+  const [isIntegrationExceptionState, setIsIntegrationExceptionState] = React.useState(false);
   
   useEffect(() => {
       if (!filterValue) {
@@ -55,6 +61,11 @@ export function ManageUsers() {
     // [filteredTableRows, tableBodyRows]
   );
   async function performUsersCallout() {
+    setIsIntegrationExceptionState(false)
+    setRenderTable(false);
+    setTableBodyRows([])
+    setFilteredTableRows([])
+    setIsIntegrationLoading(true)
     const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
 
     const options = {
@@ -71,12 +82,15 @@ export function ManageUsers() {
         console.log(Object.keys(data[0]));
         setTableHeadFields(Object.keys(data[0]));
         setTableBodyRows(data);
-        setRenderTable(true);
       } else {
-        // setLoginError(data);
+        setIsIntegrationExceptionState(true)
       }
     } catch (error) {
+      setIsIntegrationExceptionState(true)
       console.log(error);
+    } finally {
+      setIsIntegrationLoading(false)
+      setRenderTable(true);
     }
   }
 
@@ -122,21 +136,23 @@ export function ManageUsers() {
       </>
     );
   }
-  function handleDeleteUser() {
-    console.log("delete user");
-  }
   return (
     <Card size="sm" variant="outline">
       <VStack space="2xl">
         <Center>
           <Heading>Users management</Heading>
         </Center>
-        <Input>
-          <InputSlot className="pl-3">
-            <InputIcon as={SearchIcon} />
-          </InputSlot>
-          <InputField placeholder="Search user by username" onChangeText={setFilterValue}/>
-        </Input>
+        <HStack className="w-full">
+          <Input className="flex-1">
+            <InputSlot className="pl-3">
+              <InputIcon as={SearchIcon} />
+            </InputSlot>
+            <InputField placeholder="Search user by username" onChangeText={setFilterValue}/>
+          </Input>
+          <Button onPress={performUsersCallout}>
+            {isIntegrationLoading ? <ButtonSpinner color="white" /> : <ButtonIcon as={RepeatIcon}></ButtonIcon>}
+          </Button>
+        </HStack>
         {!renderTable && <Spinner size="large" color="grey" />}
         <ScrollView>
           <Table className="w-full">
@@ -147,6 +163,10 @@ export function ManageUsers() {
             </TableHeader>
               {filterValue && <TableBody className="w-full">{renderTable && defineTableBody(filteredTableRows)}</TableBody>}
               {!filterValue && <TableBody className="w-full">{renderTable && defineTableBody(tableBodyRows)}</TableBody>}
+              { isIntegrationExceptionState && <Alert variant="solid" action="error">
+                <AlertIcon as={CircleAlert}></AlertIcon>
+                An unexpected error occurred. Refresh the page.
+              </Alert>}
           </Table>
         </ScrollView>
       </VStack>
