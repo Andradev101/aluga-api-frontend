@@ -11,6 +11,12 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 
+// ✅ FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
+const localISOStringToDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day, 12, 0, 0);
+};
+
 interface Hotel {
   id: number;
   name: string;
@@ -71,7 +77,7 @@ export default function MyReservations() {
       hoje.setHours(0, 0, 0, 0);
       
       const ativas = data.filter(b => {
-        const checkout = new Date(b.check_out);
+        const checkout = localISOStringToDate(b.check_out);
         checkout.setHours(0, 0, 0, 0);
         return checkout >= hoje;
       });
@@ -91,7 +97,7 @@ export default function MyReservations() {
   }, []);
 
   const formatarData = (iso: string) => {
-    const date = new Date(iso);
+    const date = localISOStringToDate(iso);
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -100,8 +106,8 @@ export default function MyReservations() {
   };
 
   const calcularNoites = (checkin: string, checkout: string) => {
-    const inicio = new Date(checkin);
-    const fim = new Date(checkout);
+    const inicio = localISOStringToDate(checkin);
+    const fim = localISOStringToDate(checkout);
     const diff = fim.getTime() - inicio.getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
