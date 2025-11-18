@@ -80,10 +80,13 @@ export default function ModalComponent({
       if (res.ok) {
         setUpdateUserCalloutLoadingMessage(body.message);
       } else {
-        const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
-        setUpdateUserCalloutLoadingMessage(
-          `ERROR: Please check these fields: [${errors.join(", ")}]`
-        );
+        if(typeof body.detail === "string") setUpdateUserCalloutLoadingMessage("ERROR: "+body.detail)
+        else {
+          const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
+          setUpdateUserCalloutLoadingMessage(
+            `ERROR: Please check these fields: [${errors.join(", ")}]`
+          );
+        }
       }
     };
 

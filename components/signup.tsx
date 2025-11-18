@@ -17,7 +17,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { LinkText } from "@/components/ui/link";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
-import { Link as RouterLink } from "expo-router";
+import { router, Link as RouterLink } from "expo-router";
 import React, { useEffect } from "react";
 import { DatePicker } from "./datepicker";
 
@@ -36,7 +36,7 @@ export function Signup() {
   useEffect(() => {
     handleGetUserSchema();
   }, []);
-
+  const [feedbackMessage, setFeedbackMessage] = React.useState("");
   const [isIntegrationLoading, setIsIntegrationLoading] = React.useState(false);
   const [isUserSchemaReady, setIsUserSchemaReady] = React.useState(false);
   const [userSchemaInfo, setUserSchemaInfo] = React.useState({});
@@ -60,6 +60,7 @@ export function Signup() {
   };
 
   async function handleSubmit() {
+    setFeedbackMessage("")
     setIsIntegrationLoading(true);
     let invalidState = false;
     for (const [key, fieldProps] of Object.entries(userSchema)) {
@@ -102,6 +103,11 @@ export function Signup() {
       const response = await fetch(url, options);
       const data = await response.json();
       if (response.ok) {
+        const msg = data.message || "All good! User Created!";
+        setFeedbackMessage(msg);
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
       } else {
         if (Array.isArray(data.detail)) {
           data.detail.forEach((element: any) => {
@@ -117,12 +123,13 @@ export function Signup() {
               [element.loc[1]]: { ...prev[element.loc[1]], isTouched: true },
             }));
           });
+          setFeedbackMessage("error: Please correct the errors above.");
         } else {
-          alert(data.detail || "Erro no cadastro");
+          setFeedbackMessage(`error: ${data.detail || "Signup failed."}`);
         }
       }
     } catch (error) {
-      // Silently handle error
+      setFeedbackMessage("error: Network error, please try again.");
     }
   }
 
@@ -316,6 +323,20 @@ export function Signup() {
               );
             }
           })}
+          {feedbackMessage !== "" && (
+            <Alert
+              action={feedbackMessage.toLowerCase().includes("error") ? "error" : "success"}
+              variant="solid"
+              className="p-2 w-full"
+            >
+              <AlertIcon as={InfoIcon} size="sm" />
+              <AlertText size="sm">
+                {feedbackMessage}
+                {!feedbackMessage.toLowerCase().includes("error") && " — redirecting in 3s… " } 
+                {!feedbackMessage.toLowerCase().includes("error") && <ButtonSpinner color="green" />}
+              </AlertText>
+            </Alert>
+          )}
         {isUserSchemaReady && (
           <Button
             className="w-full self-end mt-4"

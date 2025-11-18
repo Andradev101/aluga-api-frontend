@@ -15,12 +15,13 @@ import {
 import { VStack } from "@/components/ui/vstack";
 import { CircleAlert } from "lucide-react-native";
 import React, { useEffect } from "react";
-import { ScrollView } from "react-native";
+import { Platform, ScrollView } from "react-native";
 import { AlertComponent } from "./alert";
 import { Alert, AlertIcon } from "./ui/alert";
 import { Button, ButtonIcon, ButtonSpinner } from "./ui/button";
 import { Center } from "./ui/center";
 import { HStack } from "./ui/hstack";
+import { Text } from "./ui/text";
 
 
 export function ManageUsers() {
@@ -108,15 +109,15 @@ export function ManageUsers() {
     return (
       <>
         {tableData.map((item: any, index: any) => (
-          <TableRow key={item.userName}>
+          <TableRow key={item.userName+index}>
             {/* <TableData className='w-[150px]'>{item.id}</TableData> */}
-            <TableData className="text-center p-2">{item.userName}</TableData>
+            <TableData className={Platform.OS !== "web"?" p-2 w-[160px]":" p-2"}>{item.userName}</TableData>
             {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
-            <TableData className="text-center p-2">{item.role}</TableData>
-            <TableData className="text-center p-2">
+            <TableData className={Platform.OS !== "web"?" p-2 w-[120px]":" p-2"}>{item.role}</TableData>
+            <TableData className={Platform.OS !== "web"?" p-2 w-[100px]":" p-2"}>
               <ModalComponent content={item} buttonName="Details" variant="admin" />
             </TableData>
-            <TableData className="text-center p-2">
+            <TableData className={Platform.OS !== "web"?" p-2 w-[75px]":" p-2"}>
               <AlertComponent content={item}>
                 {(openAlert) => (
                   <Button className="w-full" variant="solid" action="negative" onPress={openAlert}>
@@ -154,7 +155,7 @@ export function ManageUsers() {
           </Button>
         </HStack>
         {!renderTable && <Spinner size="large" color="grey" />}
-        <ScrollView>
+        <ScrollView horizontal={Platform.OS !== "web"}>
           <Table className="w-full">
             <TableHeader>
               {/* <TableRow className="w-full">
@@ -163,12 +164,14 @@ export function ManageUsers() {
             </TableHeader>
               {filterValue && <TableBody className="w-full">{renderTable && defineTableBody(filteredTableRows)}</TableBody>}
               {!filterValue && <TableBody className="w-full">{renderTable && defineTableBody(tableBodyRows)}</TableBody>}
-              { isIntegrationExceptionState && <Alert variant="solid" action="error">
-                <AlertIcon as={CircleAlert}></AlertIcon>
-                An unexpected error occurred. Refresh the page.
-              </Alert>}
           </Table>
         </ScrollView>
+        { isIntegrationExceptionState &&
+          <Alert variant="solid" action="error" className="w-full">
+            <AlertIcon as={CircleAlert}></AlertIcon>
+              <Text>An unexpected error occurred. Refresh the page.</Text>
+          </Alert>
+        }
       </VStack>
     </Card>
   );
