@@ -118,9 +118,9 @@ export function ManageUsers() {
               <ModalComponent content={item} buttonName="Details" variant="admin" onCloseCallback={() => {console.log("Modal closed for user:", item.userName);performUsersCallout();}}/>
             </TableData>
             <TableData className={Platform.OS !== "web"?" p-2 w-[75px]":" p-2"}>
-              <AlertComponent content={item}>
+              <AlertComponent content={item} onCloseCallback={()=> {performUsersCallout()}}>
                 {(openAlert) => (
-                  <Button className="w-full" variant="solid" action="negative" onPress={openAlert}>
+                  <Button className="w-full" variant="solid" action="negative" onPress={openAlert} >
                     <ButtonIcon as={TrashIcon} size="xl" />
                   </Button>
                 )}
