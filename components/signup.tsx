@@ -171,7 +171,7 @@ export function Signup() {
         userSchemaFields.map((field) => {
           if (field === "birthDate") {
             return (userSchemaForm[field] = {
-              value: "1990-01-01",
+              value: "",
               isTouched: false,
               invalidStateMsg: "",
             });
@@ -194,6 +194,10 @@ export function Signup() {
       // Silently handle error
     }
   }
+  const getDateOnly = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  };
   return (
     <Card size="lg" variant="outline" className="m-3">
       <VStack>
@@ -213,7 +217,6 @@ export function Signup() {
 
             // console.log(meta)
             if (key === "birthDate") {
-              // console.log("birthDate", userSchema[key].value)
               return (
                 <>
                   <FormControl
@@ -228,7 +231,7 @@ export function Signup() {
                       date={
                         userSchema[key].value
                           ? new Date(userSchema[key].value)
-                          : new Date("1990-01-01")
+                          : getDateOnly()
                       }
                       onDateChange={handleDateChange}
                     />

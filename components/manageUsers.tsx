@@ -115,7 +115,7 @@ export function ManageUsers() {
             {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
             <TableData className={Platform.OS !== "web"?" p-2 w-[120px]":" p-2"}>{item.role}</TableData>
             <TableData className={Platform.OS !== "web"?" p-2 w-[100px]":" p-2"}>
-              <ModalComponent content={item} buttonName="Details" variant="admin" />
+              <ModalComponent content={item} buttonName="Details" variant="admin" onCloseCallback={() => {console.log("Modal closed for user:", item.userName);performUsersCallout();}}/>
             </TableData>
             <TableData className={Platform.OS !== "web"?" p-2 w-[75px]":" p-2"}>
               <AlertComponent content={item}>

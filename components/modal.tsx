@@ -26,15 +26,18 @@ export default function ModalComponent({
   content,
   buttonName,
   variant,
+  onCloseCallback
 }: {
   content: any;
   buttonName: string;
   variant: "admin" | "self";
+  onCloseCallback?: () => void;
 }) {
   const [isFormEditable, setIsFormEditable] = useState(false);
   const [isIntegrationLoading, setIsIntegrationLoading] = useState(false);
   const [updateUserCalloutLoadingMessage, setUpdateUserCalloutLoadingMessage] =
-    useState("");
+  useState("");
+  const [actionTaken, setActionTaken] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
   let backupContent = content;
@@ -43,11 +46,8 @@ export default function ModalComponent({
     admin: [
       "userName",
       "password",
-      "birthDate",
       "emailAddress",
       "phoneNumber",
-      "firstName",
-      "lastName",
       "address",
     ],
     self: ["emailAddress", "phoneNumber"],
@@ -79,6 +79,7 @@ export default function ModalComponent({
 
       if (res.ok) {
         setUpdateUserCalloutLoadingMessage(body.message);
+        setActionTaken(true)
       } else {
         if(typeof body.detail === "string") setUpdateUserCalloutLoadingMessage("ERROR: "+body.detail)
         else {
@@ -116,6 +117,7 @@ export default function ModalComponent({
     setUpdateUserCalloutLoadingMessage("");
     setModalTitle(`User Details`);
     resetFields();
+    if(onCloseCallback && actionTaken) onCloseCallback();
   }
 
   //states
@@ -192,7 +194,7 @@ export default function ModalComponent({
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  isDisabled={!isFormEditable}
+                  isDisabled={!isFormEditable || field === "userName"}
                   isInvalid={false}
                   isReadOnly={false}
                 >
