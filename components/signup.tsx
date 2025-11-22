@@ -181,7 +181,7 @@ export function Signup() {
         userSchemaFields.map((field) => {
           if (field === "birthDate") {
             return (userSchemaForm[field] = {
-              value: new Date().toLocaleDateString(),
+              value: new Date(),
               isTouched: true,
               invalidStateMsg: "",
             });

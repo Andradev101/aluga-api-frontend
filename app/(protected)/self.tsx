@@ -26,9 +26,15 @@ export default function Self() {
   const [user, setUser] = React.useState<User | null>(null);
   const { fetchUserData } = useAuth();
     useEffect(() => {
-      setIsLoading(true)
       const fetchAndCall = async () => {
-        try {
+        fetchUser()
+      };
+      fetchAndCall();
+    }, []);
+    
+    async function fetchUser() {
+      setIsLoading(true);
+      try {
           await fetchUserData();
           let res = await performUserSelfInfoCallout();
           let resBody = await res.json()
@@ -38,14 +44,11 @@ export default function Self() {
         } finally {
           setIsLoading(false);
         }
-      };
-      fetchAndCall();
-    }, []);
- 
+    }
   return (
     <>
-      {isLoading && <ButtonSpinner color="gray" />}
       <ScrollView className="flex-1 bg-gray-50">
+        {isLoading && <ButtonSpinner color="gray" />}
         <VStack className="p-2 gap-2">
           {!isLoading &&
             <Card size="lg" variant="outline" className="m-1">
@@ -58,7 +61,7 @@ export default function Self() {
               <VStack className="gap-2">
                 {user && (
                   <Button variant="solid" size="md" action="primary">
-                    <ModalComponent content={user} buttonName="Personal information" variant="self" />
+                    <ModalComponent content={user} buttonName="Personal information" variant="self" onCloseCallback={() => fetchUser()}/>
                   </Button>
                 )}
                 <Button variant="solid" size="md" action="primary">
