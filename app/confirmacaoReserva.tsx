@@ -26,7 +26,7 @@ export default function Confirmacao() {
         <Text style={styles.infoText}>Total: R$ {total}</Text>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.push('/homepage')}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('/')}>
         <Text style={styles.buttonText}>Voltar para Início</Text>
       </TouchableOpacity>
     </View>

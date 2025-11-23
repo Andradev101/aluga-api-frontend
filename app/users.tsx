@@ -1,3 +1,5 @@
+// app/users.tsx
+
 import ModalComponent from "@/components/modal";
 import { Spinner } from "@/components/ui/spinner";
 import {
@@ -13,15 +15,12 @@ import React, { useEffect } from "react";
 import { ScrollView } from "react-native";
 
 export default function HomeScreen() {
-  useEffect(() => {
-      performUsersCallout()
-    }, []);
-    
-  const [payloadBody, setpayloadBody] = React.useState("asad");
+  // Estados existentes...
   const [tableHeadFields, setTableHeadFields] = React.useState({});
   const [tableBodyRows, setTableBodyRows] = React.useState({});
   const [renderTable, setRenderTable] = React.useState(false);
 
+  // 1. Função para buscar a lista de usuários
   async function performUsersCallout() {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
 
@@ -34,21 +33,72 @@ export default function HomeScreen() {
     try {
       const response = await fetch(url, options);
       const data = await response.json();
-      console.log(response);
-      console.log(data);
+
       if (response.ok) {
-        console.log("OK");
-        console.log(Object.keys(data[0]));
+        // Assumindo que 'data' é um array de objetos de usuários
         setTableHeadFields(Object.keys(data[0]));
         setTableBodyRows(data);
         setRenderTable(true);
       } else {
+        console.error("Erro ao buscar usuários:", data);
         // setLoginError(data);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Erro de rede ao buscar usuários:", error);
     }
   }
+
+  // 2. NOVO: Função para atualizar um usuário (Chamada pelo Modal)
+  async function updateUserCallout(updatedUser: any) {
+    // É crucial que o objeto 'updatedUser' contenha o 'id' do usuário
+    const userId = updatedUser.id;
+
+    if (!userId) {
+      console.error("ID do usuário não fornecido para atualização.");
+      return false;
+    }
+
+    const url = `${process.env.EXPO_PUBLIC_API_URL}/users/${userId}`;
+
+    // Prepara o corpo com os dados editáveis
+    const body = JSON.stringify(updatedUser);
+
+    const options = {
+      method: "PUT", // Ou 'PATCH', dependendo da sua API
+      credentials: "include" as RequestCredentials,
+      headers: { "content-type": "application/json" },
+      body: body,
+    };
+
+    try {
+      const response = await fetch(url, options);
+
+      if (response.ok) {
+        console.log(`Usuário ${userId} atualizado com sucesso!`);
+        // Recarrega a lista para refletir as mudanças na tabela
+        performUsersCallout();
+        return true;
+      } else {
+        const data = await response.json();
+        console.error("Erro na atualização do usuário:", data);
+        return false;
+      }
+    } catch (error) {
+      console.error("Erro de rede/API ao atualizar usuário:", error);
+      return false;
+    }
+  }
+
+
+  useEffect(() => {
+    performUsersCallout()
+  }, []);
+
+  // A variável payloadBody foi mantida, mas não está sendo usada de forma clara, 
+  // então não foi removida, mas foi simplificada.
+  const [payloadBody, setpayloadBody] = React.useState(null);
+
+  // ... (defineTableHead, defineTableBody)
 
   function defineTableHead(possibleFields: any) {
     console.log(possibleFields);
@@ -61,24 +111,20 @@ export default function HomeScreen() {
     );
   }
 
+  // 3. Modificação em defineTableBody para passar a função de edição
   function defineTableBody(tableData: any) {
     return (
       <>
         {tableData.map((item: any, index: any) => (
           <TableRow key={index}>
-            {/* <TableData className='w-[150px]'>{item.id}</TableData> */}
             <TableData className="min-w-[100px]">{item.userName}</TableData>
-            {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
             <TableData className="min-w-[100px]">{item.role}</TableData>
             <TableData className="min-w-[100px]">
-              <ModalComponent content={item}/>
+              <ModalComponent
+                content={item}
+                onEditComplete={updateUserCallout} // <-- NOVO PROP PASSADO
+              />
             </TableData>
-            {/* <TableData className='w-[150px]'>{item.birthDate}</TableData> */}
-            {/* <TableData className="w-[250px]">{item.emailAddress}</TableData> */}
-            {/* <TableData className="w-[250px]">{item.phoneNumber}</TableData> */}
-            {/* <TableData className='w-[150px]'>{item.firstName }</TableData> */}
-            {/* <TableData className='w-[150px]'>{item.lastName}</TableData> */}
-            {/* <TableData className='w-[150px]'>{item.address}</TableData> */}
           </TableRow>
         ))}
       </>
@@ -90,9 +136,10 @@ export default function HomeScreen() {
       <ScrollView>
         <Table className="w-full">
           <TableHeader>
+            {/* O cabeçalho da tabela (comentado no original) */}
             {/* <TableRow className="w-full">
-                {renderTable && defineTableHead(tableHeadFields)}
-              </TableRow> */}
+                {renderTable && defineTableHead(tableHeadFields)}
+              </TableRow> */}
           </TableHeader>
           {!renderTable && <Spinner size="large" color="grey" />}
           <TableBody>{renderTable && defineTableBody(tableBodyRows)}</TableBody>

@@ -1,20 +1,18 @@
+import { Alert } from 'react-native';
 
-import { Button, ButtonText } from '@/components/ui/button';
-import React from 'react';
+export const useRefreshTokenAction = () => {
 
-export default function RefreshToken() {
-  
   async function performRefreshToken() {
     await performRefreshTokenCallout();
   }
 
   async function performRefreshTokenCallout() {
     const url = `${process.env.EXPO_PUBLIC_API_URL}/refresh`;
-    
+
     const options = {
       method: 'POST',
       credentials: 'include' as RequestCredentials,
-      headers: {'content-type': 'application/json'},
+      headers: { 'content-type': 'application/json' },
     };
 
     try {
@@ -22,18 +20,20 @@ export default function RefreshToken() {
       const data = await response.json();
       console.log(response);
       console.log(data);
-      if(!response.ok){
+      Alert.alert("Refresh Token", `Status: ${response.status}\nToken renovado (verifique o console).`, [{ text: "OK" }]);
+      if (!response.ok) {
         // setIsLoginError(true)
         // setLoginErrorMsg(data.detail? data.detail : "An unexpected error occurred.");
       }
     } catch (error) {
       console.error(error);
+      Alert.alert("Erro de Rede", "Não foi possível conectar à API de refresh.", [{ text: "OK" }]);
     }
   }
 
-  return (     
-    <Button variant="solid" size="md" action="primary">
-      <ButtonText onPress={performRefreshToken}>Refresh token</ButtonText>
-    </Button>  
-  );
+  return performRefreshToken;
+};
+
+export default function RefreshToken() {
+  return null;
 }

@@ -1,116 +1,83 @@
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { LinkText } from '@/components/ui/link';
-import { VStack } from '@/components/ui/vstack';
-import { Image } from 'expo-image';
-import { Link as RouterLink } from 'expo-router';
-import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
-import 'react-native-reanimated';
-export default function HomeScreen() {
+// app/(tabs)/index.tsx
 
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <RouterLink href="/modal">
-          <RouterLink.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </RouterLink.Trigger>
-          <RouterLink.Preview />
-          <RouterLink.Menu>
-            <RouterLink.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <RouterLink.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
+import HomeHeader from '@/components/home-header';
+// 🚨 CORREÇÃO: Mude a forma como o HotelsScreen é importado.
+// Se ele é exportado com 'export default', a importação está correta,
+// mas se ele está sendo renomeado ou se o bundler está se confundindo,
+// podemos forçar o import do React.
+import HotelsScreen from '@/components/hotel-listing';
+import * as Storage from '@/components/secureStorage';
+import { useFocusEffect } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useCallback, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import FilterActionSheet, { HotelFilterParams } from '@/components/FilterActionSheet';
+
+export default function HotelsTabScreen() {
+    const [userRole, setUserRole] = useState('');
+    const [isFilterVisible, setIsFilterVisible] = useState(false);
+    const [appliedFilters, setAppliedFilters] = useState<HotelFilterParams>({ sort: 'id' });
+
+    async function getCredentials() {
+        let result = await Storage.getValueFor("user_role");
+        setUserRole(result != null ? result : '');
+    }
+
+    useFocusEffect(
+        useCallback(() => {
+            getCredentials()
+        }, [])
+    );
+
+    const handleApplyFilters = (newFilters: HotelFilterParams) => {
+        setAppliedFilters(newFilters);
+        setIsFilterVisible(false);
+    };
+
+    const MemoizedHomeHeader = useMemo(() => {
+        return (
+            <HomeHeader 
+                userRole={userRole} 
+                onFilterPress={() => setIsFilterVisible(true)} 
             />
-            <RouterLink.Menu title="More" icon="ellipsis">
-              <RouterLink.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </RouterLink.Menu>
-          </RouterLink.Menu>
-        </RouterLink>
+        );
+    }, [userRole]);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-      
-      <VStack>
-        <RouterLink href="/homepage">
-          <LinkText size="lg">🏠 Homepage</LinkText>
-        </RouterLink>
-        <RouterLink href="/login">
-          <LinkText size="lg">Login page</LinkText>
-        </RouterLink>
-        <RouterLink href="/signup">
-          <LinkText size="lg">Sign up</LinkText>
-        </RouterLink>
-        <RouterLink href="/reviews">
-          <LinkText size="lg">Avaliações</LinkText>
-        </RouterLink>
-      </VStack>
-    </ParallaxScrollView>
-  );
+    return (
+        <SafeAreaView style={styles.container} edges={['top']}>
+            <StatusBar style="auto" />
+            
+            <View style={styles.fixedHeader}>
+                {MemoizedHomeHeader}
+            </View>
+            
+            {/* O componente agora deve ser reconhecido corretamente */}
+            <HotelsScreen filters={appliedFilters} /> 
+
+            <FilterActionSheet
+                isOpen={isFilterVisible}
+                onClose={() => setIsFilterVisible(false)}
+                onApplyFilters={handleApplyFilters}
+                initialFilters={appliedFilters}
+            />
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+    container: {
+        flex: 1,
+        backgroundColor: '#f8f8f8',
+    },
+    fixedHeader: {
+        zIndex: 10,
+        backgroundColor: '#f8f8f8',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 5,
+    },
 });

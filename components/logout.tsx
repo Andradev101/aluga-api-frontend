@@ -1,4 +1,4 @@
-
+import * as Storage from '@/components/secureStorage';
 import { Button, ButtonText } from '@/components/ui/button';
 import { router } from 'expo-router';
 import React from 'react';
@@ -7,8 +7,9 @@ export default function Logout() {
   
   async function performLogout() {
     await performLogoutCallout();
-    localStorage.clear();
-    localStorage.removeItem('user_role');
+    await Storage.deleteValueFor('accessToken');
+    await Storage.deleteValueFor('refreshToken');
+    await Storage.deleteValueFor('user_role');
     router.push('/');
   }
   async function performLogoutCallout() {

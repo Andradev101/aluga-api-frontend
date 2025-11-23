@@ -30,3 +30,15 @@ export async function getValueFor(key: string): Promise<string | null> {
     return null;
   }
 }
+
+export async function deleteValueFor(key: string): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      await AsyncStorage.removeItem(key);
+    } else {
+      await SecureStore.deleteItemAsync(key);
+    }
+  } catch (error) {
+    console.error("Error deleting data:", error);
+  }
+}

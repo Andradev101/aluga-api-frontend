@@ -1,54 +1,105 @@
-// app/hotels/create-hotel.tsx
-
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
+import { listAmenities } from '@/services/amenities-api';
 import { createFullHotel } from '@/services/hotels-api';
+import { AmenityOut } from '@/types/amenities';
 import { AmenityIn, HotelDetailOut, HotelIn, MediaIn, RoomIn } from '@/types/hotels';
+
+import AmenitiesSelector from '@/components/AmenitiesSelector';
+
+// --- ÍCONES LUCIDE ---
+import {
+    ArrowLeft,
+    BedDouble,
+    CheckCircle,
+    Image,
+    MapPin,
+    PlusCircle,
+    Sparkles,
+    Trash2
+} from 'lucide-react-native';
+
 import { router } from 'expo-router';
-import { MinusCircle, PlusCircle } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- SUB-ESTADOS INICIAIS ---
-const INITIAL_ROOM_AMENITY: AmenityIn[] = [{ id: 10 }, { id: 11 }]; 
-
+// --- ESTADOS INICIAIS (LIMPOS) ---
 const INITIAL_ROOM: RoomIn = {
-    name: 'Quarto Standard',
-    room_type: 'Standard',
-    capacity: 2,
-    base_price: 150.0,
-    total_units: 1,
-    amenities: INITIAL_ROOM_AMENITY, 
+    name: '',
+    room_type: '',
+    capacity: 0,
+    base_price: 0.0,
+    total_units: 0,
+    amenities: [],
 };
 
 const INITIAL_MEDIA: MediaIn = {
-    url: 'https://exemplo.com/foto_fachada.jpg',
+    url: '',
     kind: 'MAIN',
 };
 
-// --- ESTADO INICIAL COMPLETO (HotelIn) ---
 const INITIAL_STATE: HotelIn = {
-    name: 'Novo Hotel Complexo',
-    description: 'Este é um hotel completo criado em um único passo.',
-    city: 'Rio de Janeiro',
-    neighborhood: 'Ipanema',
-    address: 'Rua Principal, 100',
-    latitude: -22.9847,
-    longitude: -43.1970,
-    policies: 'Proibido fumar nas áreas internas. Horário de check-out: 11h.',
-    
-    // Listas complexas
-    amenities: [1, 2, 3], 
-    media: [INITIAL_MEDIA],
+    name: '',
+    description: null,
+    city: '',
+    neighborhood: null,
+    address: null,
+    latitude: 0,
+    longitude: 0,
+    policies: null,
+    amenities: [],
+    media: [{ url: '', kind: 'MAIN' }],
     rooms: [INITIAL_ROOM],
 };
+
+// --- PALETA DE CORES "Aluga Aí" ---
+const AppColors = {
+    PRIMARY: '#FF7F00',
+    SECONDARY: '#FF9933',
+    WHITE: '#FFFFFF',
+    BLACK: '#111827',
+    LIGHT_GRAY: '#F3F4F6',
+    MEDIUM_GRAY: '#E5E7EB',
+    TEXT_GRAY: '#4B5563',
+    DANGER: '#EF4444',
+    SUCCESS: '#10B981',
+};
+
 
 export default function CreateHotelScreen() {
     const [formData, setFormData] = useState<HotelIn>(INITIAL_STATE);
     const [loading, setLoading] = useState(false);
+    
+    const [allAmenities, setAllAmenities] = useState<AmenityOut[]>([]);
+    const [amenitiesLoading, setAmenitiesLoading] = useState(true);
 
-    // Manipulador genérico para campos de nível superior (name, city, lat, etc.)
+    useEffect(() => {
+        const loadAmenities = async () => {
+            try {
+                const data = await listAmenities(0, 100);
+                setAllAmenities(data);
+            } catch (error) {
+                console.error("Erro ao carregar amenidades:", error);
+                Alert.alert("Erro de Conexão", "Não foi possível carregar a lista de comodidades do servidor. Tente novamente.");
+            } finally {
+                setAmenitiesLoading(false);
+            }
+        };
+        loadAmenities();
+    }, []);
+
     const handleChange = (key: keyof HotelIn, value: string | number | null) => {
         const finalValue = typeof value === 'string' && value.trim() === '' ? null : value;
         
@@ -59,25 +110,11 @@ export default function CreateHotelScreen() {
             setFormData(prev => ({ ...prev, [key]: finalValue }));
         }
     };
-
-    // --- FUNÇÕES DE MANIPULAÇÃO DINÂMICA (COMPLEXIDADE) ---
-
-    // 1. Amenidades Gerais (Lista de IDs)
-    const handleAmenityIdsChange = (amenityId: number, isAdding: boolean) => {
-        setFormData(prev => {
-            const currentAmenities = prev.amenities || [];
-            if (isAdding) {
-                if (!currentAmenities.includes(amenityId)) {
-                    return { ...prev, amenities: [...currentAmenities, amenityId] };
-                }
-            } else {
-                return { ...prev, amenities: currentAmenities.filter(id => id !== amenityId) };
-            }
-            return prev;
-        });
+    
+    const handleAmenitiesSelection = (selectedIds: number[]) => {
+        setFormData(prev => ({ ...prev, amenities: selectedIds }));
     };
-
-    // 2. Quartos (Rooms)
+    
     const handleRoomChange = (index: number, key: keyof RoomIn, value: any) => {
         setFormData(prev => {
             const newRooms = [...prev.rooms];
@@ -87,18 +124,25 @@ export default function CreateHotelScreen() {
     };
     
     const handleAddRoom = () => {
-        setFormData(prev => ({ ...prev, rooms: [...prev.rooms, { ...INITIAL_ROOM, name: `Quarto ${prev.rooms.length + 1}` }] }));
+        setFormData(prev => ({ 
+            ...prev, 
+            rooms: [...prev.rooms, { ...INITIAL_ROOM, name: '' }] 
+        }));
     };
-
+    
     const handleRemoveRoom = (index: number) => {
+        if (formData.rooms.length <= 1) {
+            Alert.alert("Atenção", "O hotel deve ter pelo menos um tipo de quarto cadastrado.");
+            return;
+        }
         setFormData(prev => ({ ...prev, rooms: prev.rooms.filter((_, i) => i !== index) }));
     };
-
-    // 3. Mídia (Media)
+    
     const handleMediaChange = (index: number, key: keyof MediaIn, value: string | null) => {
         setFormData(prev => {
             const newMedia = [...prev.media];
-            newMedia[index] = { ...newMedia[index], [key]: value || null };
+            const finalValue = typeof value === 'string' && value.trim() === '' ? null : value;
+            newMedia[index] = { ...newMedia[index], [key]: finalValue };
             return { ...prev, media: newMedia };
         });
     };
@@ -106,16 +150,32 @@ export default function CreateHotelScreen() {
     const handleAddMedia = () => {
         setFormData(prev => ({ ...prev, media: [...prev.media, { url: '', kind: 'GALLERY' }] }));
     };
-
+    
     const handleRemoveMedia = (index: number) => {
+        if (index === 0) {
+            Alert.alert("Atenção", "A primeira mídia é a foto principal e não pode ser removida.");
+            return;
+        }
         setFormData(prev => ({ ...prev, media: prev.media.filter((_, i) => i !== index) }));
     };
-
-    // --- FUNÇÃO DE SUBMISSÃO ---
+    
     const handleCreate = async () => {
-        // Validação Mínima
-        if (!formData.name || !formData.city || formData.rooms.length === 0) {
-            Alert.alert("Erro de Validação", "Nome, Cidade e pelo menos um Quarto são obrigatórios.");
+        const isRoomValid = formData.rooms.every(room => 
+            room.name && room.name.trim() !== '' && 
+            room.room_type && room.room_type.trim() !== '' && 
+            room.base_price > 0 &&
+            room.capacity > 0 &&
+            room.total_units > 0
+        );
+        
+        if (!formData.name || formData.name.trim() === '' || !formData.city || formData.city.trim() === '' || formData.rooms.length === 0 || !isRoomValid) {
+            Alert.alert("Erro de Validação", "O Nome do Hotel, Cidade e todos os Tipos de Quarto (Nome, Tipo, Preço, Capacidade e Unidades) são campos obrigatórios.");
+            return;
+        }
+
+        // Validação das coordenadas geográficas
+        if (formData.latitude < -90 || formData.latitude > 90 || formData.longitude < -180 || formData.longitude > 180) {
+            Alert.alert("Erro de Validação", "As coordenadas geográficas (Latitude: -90 a 90, Longitude: -180 a 180) estão fora do intervalo válido.");
             return;
         }
 
@@ -123,146 +183,497 @@ export default function CreateHotelScreen() {
         try {
             const newHotel: HotelDetailOut = await createFullHotel(formData);
             
-            Alert.alert("Sucesso!", `Hotel '${newHotel.name}' (ID: ${newHotel.id}) criado com sucesso junto com ${newHotel.rooms.length} quartos e ${newHotel.media.length} mídias!`);
+            Alert.alert(
+                "Hotel Cadastrado!", 
+                `O Hotel '${newHotel.name}' (ID: ${newHotel.id}) foi incluído no catálogo com sucesso.`,
+                [{ text: "Ver Hotéis", onPress: () => router.replace('/') }]
+            );
             
-            router.replace('/hotels'); 
-
         } catch (error) {
             console.error("Erro no cadastro completo:", error);
             const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-            Alert.alert("Erro de API", `Não foi possível cadastrar o hotel. Detalhes: ${errorMessage}`);
+            Alert.alert("Erro ao Cadastrar", `Não foi possível incluir o hotel no catálogo. Detalhes: ${errorMessage}`);
         } finally {
             setLoading(false);
         }
     };
+    
+    const renderSelectedAmenities = (selectedIds: number[]) => {
+        if (selectedIds.length === 0) {
+            return <Text style={styles.noAmenitiesText}>Nenhuma comodidade selecionada.</Text>;
+        }
 
-    // --- RENDERIZAÇÃO ---
-    return (
-        <ScrollView className="flex-1 bg-gray-50 p-6">
-            <VStack className="gap-8">
-                <Text style={styles.title}>Cadastro COMPLETO de Hotel</Text>
-                
-                {/* 1. Informações Básicas e Localização */}
-                <VStack style={styles.sectionContainer}>
-                    <Text style={styles.sectionTitle}>1. Dados Principais & Localização</Text>
-                    <TextInput style={styles.input} placeholder="Nome do Hotel *" value={formData.name} onChangeText={(text) => handleChange('name', text)} />
-                    <TextInput style={styles.input} placeholder="Cidade *" value={formData.city} onChangeText={(text) => handleChange('city', text)} />
-                    <TextInput style={styles.textArea} placeholder="Descrição" value={formData.description || ''} onChangeText={(text) => handleChange('description', text || null)} multiline />
-                    <TextInput style={styles.input} placeholder="Endereço Completo" value={formData.address || ''} onChangeText={(text) => handleChange('address', text || null)} />
-                    <TextInput style={styles.textArea} placeholder="Políticas" value={formData.policies || ''} onChangeText={(text) => handleChange('policies', text || null)} multiline />
-                    <TextInput style={styles.input} placeholder="Latitude" keyboardType="numeric" value={formData.latitude.toString()} onChangeText={(text) => handleChange('latitude', text)} />
-                    <TextInput style={styles.input} placeholder="Longitude" keyboardType="numeric" value={formData.longitude.toString()} onChangeText={(text) => handleChange('longitude', text)} />
-                </VStack>
+        const selectedLabels = allAmenities
+            .filter(a => selectedIds.includes(a.id))
+            .map(a => a.label)
+            .sort();
 
-                {/* 2. Comodidades Gerais do Hotel (Lista de IDs) */}
-                <VStack style={StyleSheet.flatten([styles.sectionContainer, styles.amenitiesSection])}>
-                    <Text style={styles.sectionTitle}>2. Comodidades Gerais (IDs)</Text>
-                    <Text className="text-sm text-gray-600">Selecione os IDs das comodidades do hotel (Ex: 1=Wifi, 2=Piscina).</Text>
-                    <HStack className="flex-wrap gap-2 pt-1">
-                        {[1, 2, 3, 4, 5, 10, 11, 15].map(id => (
-                            <TouchableOpacity
-                                key={id}
-                                // CORREÇÃO APLICADA AQUI
-                                style={StyleSheet.flatten([styles.pill, formData.amenities.includes(id) && styles.pillSelected])}
-                                onPress={() => handleAmenityIdsChange(id, !formData.amenities.includes(id))}
-                            >
-                                <Text style={styles.pillText}>ID {id}</Text>
-                            </TouchableOpacity>
-                        ))}
-                    </HStack>
-                    <Text className="text-sm text-gray-700 mt-3">IDs Ativos: {formData.amenities.join(', ')}</Text>
-                </VStack>
-
-                {/* 3. Mídia (Fotos/Vídeos) */}
-                <VStack style={StyleSheet.flatten([styles.sectionContainer, styles.mediaSection])}>
-                    <Text style={styles.sectionTitle}>3. Mídia ({formData.media.length})</Text>
-                    {formData.media.map((mediaItem, index) => (
-                        <VStack key={index} className="gap-2 border p-3 rounded bg-white">
-                            <Text className="font-semibold text-xs text-gray-600">Mídia #{index + 1}</Text>
-                            <TextInput style={styles.input} placeholder="URL da Mídia *" value={mediaItem.url} onChangeText={(text) => handleMediaChange(index, 'url', text)} />
-                            <TextInput style={styles.input} placeholder="Tipo (Ex: MAIN, GALLERY)" value={mediaItem.kind || ''} onChangeText={(text) => handleMediaChange(index, 'kind', text || null)} />
-                            <TouchableOpacity onPress={() => handleRemoveMedia(index)} className="self-end p-1">
-                                <MinusCircle color="#f97316" size={22} />
-                            </TouchableOpacity>
-                        </VStack>
+        return (
+            <View style={styles.amenitiesDisplayContainer}>
+                <Text style={styles.selectedAmenitiesTitle}>Comodidades Selecionadas ({selectedLabels.length}):</Text>
+                <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 5}}>
+                    {selectedLabels.map(label => (
+                        <View key={label} style={styles.selectedAmenityPill}>
+                            <CheckCircle size={14} color={AppColors.SUCCESS} />
+                            <Text style={styles.selectedAmenityItem}>{label}</Text>
+                        </View>
                     ))}
-                    <TouchableOpacity onPress={handleAddMedia} style={styles.addButton}>
-                        <PlusCircle color="#f97316" size={20} />
-                        <Text className="text-orange-600 ml-2 font-semibold">Adicionar Mídia</Text>
-                    </TouchableOpacity>
-                </VStack>
+                </View>
+            </View>
+        );
+    };
 
-                {/* 4. Quartos (Rooms) */}
-                <VStack style={StyleSheet.flatten([styles.sectionContainer, styles.roomsSection])}>
-                    <Text style={styles.sectionTitle}>4. Quartos ({formData.rooms.length})</Text>
-                    {formData.rooms.map((room, index) => (
-                        <VStack key={index} className="gap-3 border p-4 rounded bg-white shadow-sm">
-                            <HStack className="justify-between items-center pb-2 border-b border-gray-200">
-                                <Text className="font-bold text-base text-red-700">Quarto #{index + 1}</Text>
-                                <TouchableOpacity onPress={() => handleRemoveRoom(index)} className="p-1">
-                                    <MinusCircle color="#dc2626" size={22} />
-                                </TouchableOpacity>
-                            </HStack>
-                            <TextInput style={styles.input} placeholder="Nome do Quarto *" value={room.name} onChangeText={(text) => handleRoomChange(index, 'name', text)} />
-                            <TextInput style={styles.input} placeholder="Tipo (Standard, Deluxe) *" value={room.room_type} onChangeText={(text) => handleRoomChange(index, 'room_type', text)} />
-                            <TextInput style={styles.input} placeholder="Capacidade *" keyboardType="numeric" value={room.capacity.toString()} onChangeText={(text) => handleRoomChange(index, 'capacity', parseInt(text) || 0)} />
-                            <TextInput style={styles.input} placeholder="Preço Base *" keyboardType="numeric" value={room.base_price.toString()} onChangeText={(text) => handleRoomChange(index, 'base_price', parseFloat(text) || 0)} />
-                            <TextInput style={styles.input} placeholder="Total de Unidades *" keyboardType="numeric" value={room.total_units.toString()} onChangeText={(text) => handleRoomChange(index, 'total_units', parseInt(text) || 0)} />
+    const RoomAmenitiesSelectorWrapper = ({ roomIndex }: { roomIndex: number }) => {
+        const currentRoomAmenities = formData.rooms[roomIndex].amenities;
+        const selectedIds = currentRoomAmenities.map(a => (a as { id: number }).id);
 
-                            <Text className="font-semibold text-sm mt-2 text-gray-700">Comodidades do Quarto (IDs)</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="IDs (Ex: 10,11,12) - Separados por vírgula"
-                                value={room.amenities.map(a => a.id).join(', ')}
-                                onChangeText={(text) => {
-                                    const ids = text.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id) && id > 0).map(id => ({ id }));
-                                    handleRoomChange(index, 'amenities', ids as AmenityIn[]);
-                                }}
-                            />
-                        </VStack>
-                    ))}
-                    <TouchableOpacity onPress={handleAddRoom} style={StyleSheet.flatten([styles.addButton, { borderColor: '#f87171' }])}>
-                        <PlusCircle color="#dc2626" size={20} />
-                        <Text className="text-red-600 ml-2 font-semibold">Adicionar Novo Quarto</Text>
-                    </TouchableOpacity>
-                </VStack>
+        const handleRoomAmenitiesSelection = useCallback((newIds: number[]) => {
+            const newAmenitiesArray: AmenityIn[] = newIds.map(id => ({ id: id } as AmenityIn));
+            
+            handleRoomChange(roomIndex, 'amenities', newAmenitiesArray);
+        }, [roomIndex]);
 
-                {/* Ação Principal */}
-                <VStack className="gap-4 mt-4 mb-10">
-                    <Button
-                        className="bg-red-600 active:bg-red-700"
-                        onPress={handleCreate}
-                        disabled={loading}
-                    >
-                        <ButtonText className="text-white font-semibold text-lg">
-                            {loading ? 'Cadastrando TUDO...' : 'CRIAR HOTEL (COMPLETO) '}
-                        </ButtonText>
-                    </Button>
-                </VStack>
+        return (
+            <VStack space="sm">
+                <AmenitiesSelector
+                    allAmenities={allAmenities}
+                    selectedAmenityIds={selectedIds}
+                    onSelectionChange={handleRoomAmenitiesSelection}
+                    title={`Comodidades Específicas do Quarto #${roomIndex + 1}`}
+                    primaryColor={AppColors.PRIMARY}
+                    secondaryColor={AppColors.SECONDARY}
+                    isLoading={amenitiesLoading}
+                />
+                {renderSelectedAmenities(selectedIds)}
             </VStack>
-        </ScrollView>
+        );
+    }
+    
+    const RoomRepeater = ({ room, index }: { room: RoomIn, index: number }) => {
+
+        const parseAndHandleNumber = (key: keyof RoomIn, text: string, parser: (s: string) => number) => {
+            const value = parser(text) || 0;
+            handleRoomChange(index, key, value);
+        };
+        
+        const displayValue = (value: number) => value === 0 ? '' : value.toString();
+
+        return (
+            <VStack style={styles.repeaterItem}>
+                <HStack style={styles.repeaterHeader}>
+                    <Text style={styles.repeaterTitle}>Tipo de Quarto #{index + 1}: {room.name || 'Sem Nome'}</Text>
+                    {formData.rooms.length > 1 && (
+                        <TouchableOpacity onPress={() => handleRemoveRoom(index)} style={styles.removeButton}>
+                            <Trash2 color={AppColors.DANGER} size={20} />
+                        </TouchableOpacity>
+                    )}
+                </HStack>
+                
+                <TextInput style={styles.input} placeholder="Nome do Quarto *" value={room.name} onChangeText={(text) => handleRoomChange(index, 'name', text)} />
+                <TextInput style={styles.input} placeholder="Tipo de Cama/Configuração *" value={room.room_type} onChangeText={(text) => handleRoomChange(index, 'room_type', text)} />
+                
+                {/* ALTERAÇÃO: Campos de Capacidade e Preço agora em V-Stack (um abaixo do outro) */}
+                <VStack style={{ gap: 10 }}> 
+                    <TextInput 
+                        style={styles.input} 
+                        placeholder="Capacidade Máxima (Pessoas) *" 
+                        keyboardType="numeric" 
+                        value={displayValue(room.capacity)} 
+                        onChangeText={(text) => parseAndHandleNumber('capacity', text, parseInt)} 
+                    />
+                    <TextInput 
+                        style={styles.input} 
+                        placeholder="Preço Base por Noite (R$) *" 
+                        keyboardType="numeric" 
+                        value={displayValue(room.base_price)} 
+                        onChangeText={(text) => parseAndHandleNumber('base_price', text.replace(',', '.'), parseFloat)}
+                    />
+                </VStack>
+                
+                <TextInput 
+                    style={styles.input} 
+                    placeholder="Unidades Disponíveis *" 
+                    keyboardType="numeric" 
+                    value={displayValue(room.total_units)} 
+                    onChangeText={(text) => parseAndHandleNumber('total_units', text, parseInt)} 
+                />
+
+                <RoomAmenitiesSelectorWrapper roomIndex={index} />
+
+            </VStack>
+        );
+    }
+
+    const MediaRepeater = ({ mediaItem, index }: { mediaItem: MediaIn, index: number }) => (
+        <VStack key={index} style={styles.repeaterItem}>
+            <HStack style={styles.repeaterHeader}>
+                <Text style={styles.repeaterTitle}>Mídia #{index + 1} ({mediaItem.kind || 'GALERIA'})</Text>
+                {index > 0 && ( 
+                    <TouchableOpacity onPress={() => handleRemoveMedia(index)} style={styles.removeButton}>
+                        <Trash2 color={AppColors.DANGER} size={20} />
+                    </TouchableOpacity>
+                )}
+            </HStack>
+            <TextInput style={styles.input} placeholder={index === 0 ? "URL da Imagem de Capa *" : "URL da Imagem/Mídia *"} value={mediaItem.url} onChangeText={(text) => handleMediaChange(index, 'url', text)} />
+            <TextInput style={styles.input} placeholder="Tipo (MAIN, GALLERY, VIDEO - Opcional)" value={mediaItem.kind || ''} onChangeText={(text) => handleMediaChange(index, 'kind', text || null)} />
+        </VStack>
+    );
+
+    const displayCoordValue = (value: number) => value === 0 ? '' : value.toString();
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            {/* --- HEADER FIXO --- */}
+            <View style={styles.headerContainer}>
+                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                    <ArrowLeft size={24} color={AppColors.BLACK} />
+                </TouchableOpacity>
+                <Text style={styles.title}>Cadastro de novo hotel</Text>
+            </View>
+
+            <ScrollView 
+                style={styles.scrollView}
+                contentContainerStyle={styles.scrollContent} 
+                showsVerticalScrollIndicator={false}
+            >
+                
+                <Text style={styles.subtitle}>Preencha os dados do hotel para inclusão no catálogo da plataforma. Campos com * são obrigatórios.</Text>
+                
+                <VStack style={styles.formContent}>
+                    
+                    {/* 1. Informações Básicas e Localização */}
+                    <View style={styles.sectionCard}>
+                        <View style={styles.sectionHeader}>
+                            <MapPin size={24} color={AppColors.PRIMARY} />
+                            <Text style={styles.sectionTitle}>1. Informações Básicas do Hotel</Text>
+                        </View>
+                        <TextInput style={styles.input} placeholder="Nome Oficial do Hotel *" value={formData.name} onChangeText={(text) => handleChange('name', text)} />
+                        <TextInput style={styles.textArea} placeholder="Descrição detalhada (Opcional)" value={formData.description || ''} onChangeText={(text) => handleChange('description', text || null)} multiline />
+                        <TextInput style={styles.textArea} placeholder="Regras e Políticas (Check-in, Cancelamento - Opcional)" value={formData.policies || ''} onChangeText={(text) => handleChange('policies', text || null)} multiline />
+                        
+                        <Text style={styles.subHeader}>Dados de Localização</Text>
+                        <TextInput style={styles.input} placeholder="Cidade *" value={formData.city} onChangeText={(text) => handleChange('city', text)} />
+                        <TextInput style={styles.input} placeholder="Bairro (Opcional)" value={formData.neighborhood || ''} onChangeText={(text) => handleChange('neighborhood', text || null)} />
+                        <TextInput style={styles.input} placeholder="Endereço Completo (Opcional)" value={formData.address || ''} onChangeText={(text) => handleChange('address', text || null)} />
+                        
+                        <HStack style={{ gap: 10 }}>
+                            <TextInput 
+                                style={StyleSheet.flatten([styles.input, styles.coordinateInput])} 
+                                placeholder="Latitude" 
+                                keyboardType="numeric" 
+                                value={displayCoordValue(formData.latitude)} 
+                                onChangeText={(text) => handleChange('latitude', text)} 
+                            />
+                            <TextInput 
+                                style={StyleSheet.flatten([styles.input, styles.coordinateInput])} 
+                                placeholder="Longitude" 
+                                keyboardType="numeric" 
+                                value={displayCoordValue(formData.longitude)} 
+                                onChangeText={(text) => handleChange('longitude', text)} 
+                            />
+                        </HStack>
+                           <Text style={StyleSheet.flatten([styles.subHeader, {marginTop: -10, fontStyle: 'italic', fontWeight: '400'}])}>
+                                Latitude e Longitude são opcionais, mas recomendados para localização precisa.
+                           </Text>
+                    </View>
+
+                    {/* 2. Comodidades Gerais */}
+                    <View style={styles.sectionCard}>
+                        <View style={styles.sectionHeader}>
+                            <Sparkles size={24} color={AppColors.PRIMARY} />
+                            <Text style={styles.sectionTitle}>2. Comodidades e Serviços Gerais</Text>
+                        </View>
+                        
+                        <VStack space="sm">
+                            <AmenitiesSelector
+                                allAmenities={allAmenities}
+                                selectedAmenityIds={formData.amenities}
+                                onSelectionChange={handleAmenitiesSelection} 
+                                title="Quais comodidades e serviços o Hotel oferece em áreas comuns?"
+                                primaryColor={AppColors.PRIMARY}
+                                secondaryColor={AppColors.SECONDARY}
+                                isLoading={amenitiesLoading}
+                            />
+                            {renderSelectedAmenities(formData.amenities)}
+                        </VStack>
+                        
+                    </View>
+
+                    {/* 3. Mídia (Fotos/Vídeos) */}
+                    <View style={styles.sectionCard}>
+                        <View style={styles.sectionHeader}>
+                            <Image size={24} color={AppColors.PRIMARY} />
+                            <Text style={styles.sectionTitle}>3. Mídias (Fotos e Vídeos) ({formData.media.length})</Text>
+                        </View>
+                        {formData.media.map((mediaItem, index) => (
+                            <MediaRepeater key={index} mediaItem={mediaItem} index={index} />
+                        ))}
+                        <TouchableOpacity onPress={handleAddMedia} style={StyleSheet.flatten([styles.addButton, { borderColor: AppColors.SECONDARY, backgroundColor: AppColors.WHITE, marginTop: 15 }])}>
+                            <PlusCircle color={AppColors.SECONDARY} size={20} />
+                            <Text style={StyleSheet.flatten([styles.addButtonText, { color: AppColors.SECONDARY }])}>Adicionar URL de Mídia</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* 4. Quartos (Rooms) */}
+                    <View style={styles.sectionCard}>
+                        <View style={styles.sectionHeader}>
+                            <BedDouble size={24} color={AppColors.PRIMARY} />
+                            <Text style={styles.sectionTitle}>4. Gestão de Tipos de Quartos ({formData.rooms.length})</Text>
+                        </View>
+                        <Text style={styles.subHeader}>Defina a configuração, preço e disponibilidade de cada tipo de quarto no hotel.</Text>
+                        {formData.rooms.map((room, index) => (
+                            <RoomRepeater key={index} room={room} index={index} />
+                        ))}
+                        <TouchableOpacity onPress={handleAddRoom} style={StyleSheet.flatten([styles.addButton, { borderColor: AppColors.PRIMARY, backgroundColor: AppColors.WHITE, marginTop: 15 }])}>
+                            <PlusCircle color={AppColors.PRIMARY} size={20} />
+                            <Text style={StyleSheet.flatten([styles.addButtonText, { color: AppColors.PRIMARY }])}>Adicionar Novo Tipo de Quarto</Text>
+                        </TouchableOpacity>
+                    </View>
+                    
+                </VStack>
+
+                <View style={{ height: 100 }} />
+
+            </ScrollView>
+
+            {/* Ação Principal - Botão Fixo/Final */}
+            <View style={styles.footerContainer}>
+                <Button
+                    className="w-full"
+                    style={StyleSheet.flatten([styles.mainButton, { backgroundColor: AppColors.PRIMARY }])}
+                    onPress={handleCreate}
+                    disabled={loading || amenitiesLoading}
+                >
+                    {loading ? (
+                        <HStack className="items-center justify-center gap-2">
+                            <ActivityIndicator color="#fff" size="small" />
+                            <ButtonText style={styles.mainButtonText}>
+                                CADASTRANDO HOTEL...
+                            </ButtonText>
+                        </HStack>
+                    ) : (
+                        <ButtonText style={styles.mainButtonText}>
+                            CADASTRAR HOTEL NO CATÁLOGO
+                        </ButtonText>
+                    )}
+                </Button>
+            </View>
+        </SafeAreaView>
     );
 }
 
+// --- ESTILOS CORRIGIDOS ---
 const styles = StyleSheet.create({
-    title: { fontSize: 24, fontWeight: 'bold', color: '#1f2937', textAlign: 'center' },
-    sectionContainer: { padding: 15, borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', backgroundColor: 'white', gap: 10 },
-    sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#374151', marginBottom: 5 },
-    input: { height: 44, borderColor: '#d1d5db', borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, backgroundColor: '#f9fafb', fontSize: 15 },
-    textArea: { height: 80, borderColor: '#d1d5db', borderWidth: 1, borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: '#f9fafb', fontSize: 15 },
-
-    // Estilos Específicos de Seção
-    amenitiesSection: { borderColor: '#bbf7d0', backgroundColor: '#f0fdf4' },
-    mediaSection: { borderColor: '#fed7aa', backgroundColor: '#fff7ed' },
-    roomsSection: { borderColor: '#fecaca', backgroundColor: '#fef2f2' },
-
-    // Estilos de Pill/Botão
-    pill: { paddingVertical: 5, paddingHorizontal: 10, borderRadius: 15, backgroundColor: '#d1d5db', borderWidth: 1, borderColor: '#a1a1aa' },
-    pillSelected: { backgroundColor: '#34d399', borderColor: '#059669' },
-    pillText: { fontSize: 14, color: '#1f2937' },
+    safeArea: { flex: 1, backgroundColor: AppColors.LIGHT_GRAY, },
     
-    // CORREÇÃO APLICADA AQUI
-    addButton: StyleSheet.flatten([ 
-        { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 10, borderRadius: 8, borderWidth: 2, borderStyle: 'dashed', borderColor: '#fdb44b' }
-    ]) as any // O `as any` é para satisfazer a tipagem do TypeScript no React Native Web
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingVertical: 15,
+        backgroundColor: AppColors.WHITE,
+        borderBottomWidth: 1,
+        borderBottomColor: AppColors.MEDIUM_GRAY,
+    },
+    backButton: {
+        marginRight: 10,
+        padding: 5,
+    },
+    title: { 
+        fontSize: 20, 
+        fontWeight: '700', 
+        color: AppColors.BLACK, 
+    },
+    
+    scrollView: {
+        flex: 1,
+    },
+    scrollContent: { 
+        paddingHorizontal: 15,
+        paddingTop: 15, 
+        paddingBottom: 20, 
+    },
+    subtitle: { 
+        fontSize: 15, 
+        color: AppColors.TEXT_GRAY, 
+        marginBottom: 25, 
+        fontWeight: '400', 
+    },
+    formContent: { gap: 30, }, 
+
+    sectionCard: { 
+        backgroundColor: AppColors.WHITE, 
+        borderRadius: 15, 
+        paddingHorizontal: 20, 
+        paddingVertical: 20,
+        gap: 15, 
+        ...Platform.select({
+            ios: {
+                shadowColor: AppColors.BLACK,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.05, 
+                shadowRadius: 10,
+            },
+            android: {
+                elevation: 5,
+            },
+        }),
+    },
+    sectionHeader: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        paddingBottom: 10, 
+        marginBottom: 5, 
+        borderBottomWidth: 1, 
+        borderBottomColor: AppColors.MEDIUM_GRAY, 
+    },
+    sectionTitle: { 
+        flex: 1,
+        fontSize: 20, 
+        fontWeight: '700', 
+        color: AppColors.BLACK, 
+        marginLeft: 10, 
+    },
+    subHeader: { 
+        fontSize: 14, 
+        fontWeight: '600', 
+        color: AppColors.TEXT_GRAY, 
+        marginTop: 5, 
+    },
+    
+    input: { 
+        height: 48, 
+        borderColor: AppColors.MEDIUM_GRAY, 
+        borderWidth: 1, 
+        borderRadius: 10, 
+        paddingHorizontal: 15, 
+        backgroundColor: AppColors.WHITE, 
+        fontSize: 16, 
+        color: AppColors.BLACK, 
+        fontWeight: '500', 
+    },
+    coordinateInput: {
+        flex: 1,
+        minWidth: '48%', 
+        textAlign: 'center',
+    },
+    textArea: { 
+        minHeight: 100, 
+        borderColor: AppColors.MEDIUM_GRAY, 
+        borderWidth: 1, 
+        borderRadius: 10, 
+        paddingHorizontal: 15, 
+        paddingVertical: 12, 
+        backgroundColor: AppColors.WHITE, 
+        fontSize: 16, 
+        color: AppColors.BLACK, 
+        textAlignVertical: 'top', 
+        fontWeight: '500', 
+    },
+    
+    repeaterItem: { 
+        gap: 10, 
+        padding: 15, 
+        borderRadius: 10, 
+        borderWidth: 1, 
+        borderColor: AppColors.MEDIUM_GRAY, 
+        backgroundColor: AppColors.LIGHT_GRAY, 
+        marginTop: 10,
+    },
+    repeaterHeader: { 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        borderBottomWidth: 1, 
+        borderBottomColor: AppColors.MEDIUM_GRAY, 
+        paddingBottom: 8, 
+        marginBottom: 5,
+    },
+    repeaterTitle: { 
+        fontSize: 17, 
+        fontWeight: '600', 
+        color: AppColors.BLACK, 
+        flexShrink: 1,
+    },
+    removeButton: {
+        padding: 5,
+    },
+
+    addButton: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        padding: 12, 
+        borderRadius: 10, 
+        borderWidth: 2, 
+        borderStyle: 'dashed', 
+    },
+    addButtonText: { 
+        fontSize: 16, 
+        fontWeight: '600', 
+        marginLeft: 8, 
+    },
+
+    noAmenitiesText: {
+        fontSize: 14,
+        color: AppColors.TEXT_GRAY,
+        fontStyle: 'italic',
+        marginTop: 5,
+    },
+    amenitiesDisplayContainer: {
+        borderTopWidth: 1,
+        borderTopColor: AppColors.MEDIUM_GRAY,
+        paddingTop: 10,
+        marginTop: 5,
+    },
+    selectedAmenitiesTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: AppColors.TEXT_GRAY,
+        marginBottom: 8,
+    },
+    selectedAmenityPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#E6FFE6',
+        borderRadius: 15,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderWidth: 1,
+        borderColor: AppColors.SUCCESS,
+    },
+    selectedAmenityItem: {
+        fontSize: 15,
+        color: AppColors.TEXT_GRAY, 
+        marginLeft: 5,
+        fontWeight: '500', 
+    },
+    
+    footerContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+        backgroundColor: AppColors.WHITE,
+        borderTopWidth: 1,
+        borderTopColor: AppColors.MEDIUM_GRAY,
+        ...Platform.select({
+            ios: {
+                shadowColor: AppColors.BLACK,
+                shadowOffset: { width: 0, height: -2 },
+                shadowOpacity: 0.08,
+                shadowRadius: 8,
+            },
+            android: {
+                elevation: 10,
+            },
+        }),
+    },
+    mainButton: { height: 55, borderRadius: 12, justifyContent: 'center', },
+    mainButtonText: { 
+        color: AppColors.WHITE, 
+        fontWeight: '800', 
+        fontSize: 18, 
+    }
 });

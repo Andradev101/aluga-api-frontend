@@ -1,3 +1,4 @@
+// constants/colors.ts
 // Paleta de cores baseada na logo Aluga Aí
 export const Colors = {
   // Cores principais da logo
