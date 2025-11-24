@@ -1,6 +1,8 @@
 // app/_layout.tsx
-import { Feather } from '@expo/vector-icons';
 
+import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
+import '@/global.css';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 
 import { Stack, router } from 'expo-router';
@@ -9,30 +11,17 @@ import { StatusBar } from 'expo-status-bar';
 
 import { StyleSheet, TouchableOpacity } from 'react-native';
 
+import { Feather } from '@expo/vector-icons';
+
+import React from 'react';
 import 'react-native-reanimated';
-
-
-
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-
-
-import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
-
-import '@/global.css';
-
-
-
-const BackIcon = () => <Feather name="arrow-left" size={24} color="black" />;
-
-
-
 export const unstable_settings = {
 
     anchor: '(tabs)',
 
 };
 
+const BackIcon = () => <Feather name="arrow-left" size={24} color="black" />;
 
 
 export default function RootLayout() {
@@ -47,55 +36,55 @@ export default function RootLayout() {
 
             <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 
-            <Stack>
+                <Stack>
 
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                    <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
 
-                <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+                    <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
 
-                <Stack.Screen
+                    <Stack.Screen
 
-                    name="hotels/[hotelId]"
+                        name="hotels/[hotelId]"
 
-                    options={{
+                        options={{
 
-                        headerTitle: '',
+                            headerTitle: '',
 
-                        headerTransparent: true,
+                            headerTransparent: true,
 
-                        headerTintColor: '#000',
+                            headerTintColor: '#000',
 
-                        headerBackTitle: '',
+                            headerBackTitle: '',
 
 
 
-                        // O headerLeft agora usa o estilo atualizado
+                            // O headerLeft agora usa o estilo atualizado
 
-                        headerLeft: () => (
+                            headerLeft: () => (
 
-                            <TouchableOpacity
+                                <TouchableOpacity
 
-                                onPress={() => router.back()}
+                                    onPress={() => router.back()}
 
-                                style={styles.headerButtonContainer}
+                                    style={styles.headerButtonContainer}
 
-                            >
+                                >
 
-                                <BackIcon />
+                                    <BackIcon />
 
-                            </TouchableOpacity>
+                                </TouchableOpacity>
 
-                        ),
+                            ),
 
-                        headerRight: () => null,
+                            headerRight: () => null,
 
-                    }}
+                        }}
 
-                />
+                    />
 
-            </Stack>
+                </Stack>
 
-            <StatusBar style="auto" />
+                <StatusBar style="auto" />
 
             </ThemeProvider>
 

@@ -1,7 +1,13 @@
-import { Button, ButtonGroup, ButtonText } from '@/components/ui/button';
-import { Heading } from '@/components/ui/heading';
-import { CloseIcon, Icon } from '@/components/ui/icon';
-import { Input, InputField } from '@/components/ui/input';
+import { Alert, AlertIcon, AlertText } from "@/components/ui/alert";
+import {
+  Button,
+  ButtonGroup,
+  ButtonSpinner,
+  ButtonText,
+} from "@/components/ui/button";
+import { Heading } from "@/components/ui/heading";
+import { CloseIcon, Icon, InfoIcon } from "@/components/ui/icon";
+import { Input, InputField } from "@/components/ui/input";
 import {
   Modal,
   ModalBackdrop,
@@ -10,120 +16,149 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-} from '@/components/ui/modal';
-import { Text } from '@/components/ui/text';
-import React, { useState } from 'react';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+} from "@/components/ui/modal";
+import { Text } from "@/components/ui/text";
+import React, { useState } from "react";
+import { Platform } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 
-// 1. Tipagem atualizada para incluir o prop de callback da edição
-interface ModalProps {
+export default function ModalComponent({
+  content,
+  buttonName,
+  variant,
+}: {
   content: any;
-  onEditComplete: (updatedUser: any) => Promise<boolean>;
-}
-
-// 2. Recebendo o novo prop 'onEditComplete'
-export default function ModalComponent({ content, onEditComplete }: ModalProps) {
+  buttonName: string;
+  variant: "admin" | "self";
+}) {
   const [isFormEditable, setIsFormEditable] = useState(false);
+  const [isIntegrationLoading, setIsIntegrationLoading] = useState(false);
+  const [updateUserCalloutLoadingMessage, setUpdateUserCalloutLoadingMessage] =
+    useState("");
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
-
-  // Usamos o content original para resetar/backup
-  const backupContent = content;
-
-  // Inicializa o estado do formulário com base no content (agora no estado para ser editável)
-  const [form, setForm] = React.useState({
-    userName: { value: content.userName, isTouched: false },
-    password: { value: content.password, isTouched: false },
-    birthDate: { value: content.birthDate, isTouched: false },
-    emailAddress: { value: content.emailAddress, isTouched: false },
-    phoneNumber: { value: content.phoneNumber, isTouched: false },
-    firstName: { value: content.firstName, isTouched: false },
-    lastName: { value: content.lastName, isTouched: false },
-    address: { value: content.address, isTouched: false },
+  let backupContent = content;
+  //this could be done using a context-based backend callout
+  const formFieldsByVariant: Record<"admin" | "self", string[]> = {
+    admin: [
+      "userName",
+      "password",
+      "birthDate",
+      "emailAddress",
+      "phoneNumber",
+      "firstName",
+      "lastName",
+      "address",
+    ],
+    self: ["emailAddress", "phoneNumber"],
+  };
+  // console.log("Modal variant:", variant);
+  // const initialForm = formFieldsByVariant[variant].reduce(
+  //   (acc, key) => {
+  //     acc[key] = { value: content[key] ?? "", isTouched: false };
+  //     return acc;
+  //   },
+  //   {} as Record<string, { value: any; isTouched: boolean }>
+  // );
+  const [form, setForm] = React.useState(() => {
+    const variantFields =
+      formFieldsByVariant[variant] ?? formFieldsByVariant["admin"];
+    return variantFields.reduce((acc, key) => {
+      acc[key] = { value: content[key] ?? "", isTouched: false };
+      return acc;
+    }, {} as Record<string, { value: any; isTouched: boolean }>);
   });
-
   type FormField = keyof typeof form;
   const fields: FormField[] = Object.keys(form) as FormField[];
 
-  // open close modal
+  async function handleUpdateUserCallout() {
+    setIsIntegrationLoading(true);
+
+    const processResponse = async (res: Response) => {
+      const body = await res.json();
+
+      if (res.ok) {
+        setUpdateUserCalloutLoadingMessage(body.message);
+      } else {
+        if(typeof body.detail === "string") setUpdateUserCalloutLoadingMessage("ERROR: "+body.detail)
+        else {
+          const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
+          setUpdateUserCalloutLoadingMessage(
+            `ERROR: Please check these fields: [${errors.join(", ")}]`
+          );
+        }
+      }
+    };
+
+    try {
+      let res;
+      if (variant === "self") res = await performUpdateUserSelfInfoCallout(form);
+      else res = await performUpdateUserInfoCallout(form);
+      await processResponse(res);
+    } catch (error) {
+      console.error(error);
+      setUpdateUserCalloutLoadingMessage("An unexpected error occurred.");
+    } finally {
+      setIsIntegrationLoading(false);
+    }
+  }
+
+  //open close modal
   function handleOpenModal() {
-    setModalVisible(true)
-    setModalEditable(false)
-    setModalTitle(`User Details`)
+    setModalVisible(true);
+    setModalEditable(false);
+    setModalTitle(`User Details`);
   }
   function handleCloseModal() {
-    setModalVisible(false)
-    setModalEditable(false)
-    setModalTitle(`User Details`)
-    resetFields()
+    setModalVisible(false);
+    setModalEditable(false);
+    setIsIntegrationLoading(false);
+    setUpdateUserCalloutLoadingMessage("");
+    setModalTitle(`User Details`);
+    resetFields();
   }
 
   // states
   function handleEditState() {
-    setModalTitle(`Edit user`)
-    setModalEditable(true)
+    setModalTitle(`Edit user`);
+    setModalEditable(true);
+  }
+
+  function handleRemoveAction() {
+    //
   }
   function handleCancelEditState() {
-    setModalTitle(`User Details`)
-    setModalEditable(false)
-    resetFields()
+    setModalEditable(false);
+    setIsIntegrationLoading(false);
+    setUpdateUserCalloutLoadingMessage("");
+    setModalTitle(`User Details`);
+    resetFields();
   }
 
-  // 3. NOVO: Função para extrair dados e chamar a API do pai
-  async function handleEditUser() {
-    // 1. Extrair apenas os valores atuais do formulário
-    const updatedData = fields.reduce((acc, field) => {
-      // Ignora a senha se ela não foi tocada (assumindo que a API só deve aceitar o novo valor)
-      // Se a API requer que todos os campos sejam enviados, remova este if/else
-      if (field === 'password' && !form[field].isTouched) {
-        return acc;
-      }
-      acc[field] = form[field].value;
-      return acc;
-    }, {} as any);
-
-    // 2. Adicionar o ID do usuário (necessário para a rota de atualização na API)
-    updatedData.id = backupContent.id;
-
-    console.log("Enviando dados para a API:", updatedData);
-
-    // 3. Chamar a função de callback fornecida pelo componente pai
-    const success = await onEditComplete(updatedData);
-
-    // 4. Se a API retornar sucesso, fechar o modal e reverter o estado.
-    if (success) {
-      handleCloseModal();
-    }
-  }
-
-  // helpers
+  //helpers
   function resetFields() {
-    // Cria um novo objeto de estado com base nos dados de backup
-    const newFormState = fields.reduce((acc, field) => {
-      acc[field] = { value: backupContent[field], isTouched: false };
-      return acc;
-    }, {} as typeof form);
-
-    setForm(newFormState);
+    fields.map((field) => {
+      form[field].value = backupContent[field];
+    });
   }
   function setModalEditable(value: boolean) {
-    setIsFormEditable(value)
+    setIsFormEditable(value);
   }
-  // A função logForm agora não é mais necessária, pois foi substituída por handleEditUser
-  // function logForm(){ console.log(form) }
-
+  function logForm() {
+    console.log(form);
+  }
   return (
     <SafeAreaProvider>
       <SafeAreaView>
         <Button onPress={handleOpenModal}>
-          <ButtonText>Details</ButtonText>
+          <ButtonText>{buttonName ? buttonName : "Details"}</ButtonText>
         </Button>
       </SafeAreaView>
 
       <Modal
         isOpen={showModal}
         onClose={handleCloseModal}
-        size="sm"
+        size={Platform.OS === "web" ? "md" : "full"}
       >
         <ModalBackdrop />
         <ModalContent>
@@ -134,6 +169,21 @@ export default function ModalComponent({ content, onEditComplete }: ModalProps) 
             </ModalCloseButton>
           </ModalHeader>
           <ModalBody>
+            {!!updateUserCalloutLoadingMessage && (
+              <Alert
+                action={
+                  updateUserCalloutLoadingMessage
+                    .toLowerCase()
+                    .includes("error")
+                    ? "error"
+                    : "success"
+                }
+                variant="solid"
+              >
+                <AlertIcon as={InfoIcon} />
+                <AlertText>{updateUserCalloutLoadingMessage}</AlertText>
+              </Alert>
+            )}
             {fields.map((field, index) => (
               <React.Fragment key={`fragment-${index}`}>
                 <Text key={`text-${index}`}>{field}</Text>
@@ -150,58 +200,90 @@ export default function ModalComponent({ content, onEditComplete }: ModalProps) 
                     key={`inputfield-${index}`}
                     value={form[field].value}
                     onChangeText={(text) =>
-                      setForm(prev => ({
+                      setForm((prev) => ({
                         ...prev,
-                        [field]: { ...prev[field], value: text }
-                      }))}
+                        [field]: { ...prev[field], value: text },
+                      }))
+                    }
                     onBlur={() =>
-                      setForm(prev => ({
+                      setForm((prev) => ({
                         ...prev,
-                        [field]: { ...prev[field], isTouched: true }
-                      }))}
-                  />
+                        [field]: { ...prev[field], isTouched: true },
+                      }))
+                    }
+                  ></InputField>
                 </Input>
               </React.Fragment>
             ))}
           </ModalBody>
           <ModalFooter>
-
-            <ButtonGroup flexDirection="row">
-              {/* Botão EDITAR (Visível apenas em modo de visualização) */}
+            <ButtonGroup flexDirection="column" className="w-full">
               {!isFormEditable && (
                 <Button
                   variant="outline"
                   action="primary"
-                  onPress={handleEditState} // Chamada para habilitar a edição
+                  onPress={handleEditState}
                 >
                   <ButtonText>Edit</ButtonText>
                 </Button>
               )}
 
-              {/* Botão SALVAR (Visível apenas em modo de edição) */}
+              {/* { !isFormEditable && <Button
+              variant="solid"
+              action="negative">
+                <ButtonText onPress={handleRemoveAction}>Remove</ButtonText>
+              </Button> } */}
+
               {isFormEditable && (
-                <Button
-                  action="positive" // Cor de sucesso para salvar
-                  onPress={handleEditUser} // Chamada para enviar os dados editados
-                >
-                  <ButtonText>Save</ButtonText>
+                <Button onPress={handleUpdateUserCallout} action="primary">
+                  <ButtonText>Update</ButtonText>
+                  {isIntegrationLoading && <ButtonSpinner />}
                 </Button>
               )}
 
-              {/* Botão CANCELAR (Visível apenas em modo de edição) */}
               {isFormEditable && (
-                <Button
-                  action="negative"
-                  onPress={handleCancelEditState} // Chamada para cancelar e resetar campos
-                >
+                <Button onPress={handleCancelEditState} action="negative">
                   <ButtonText>Cancel</ButtonText>
                 </Button>
               )}
             </ButtonGroup>
-
           </ModalFooter>
         </ModalContent>
       </Modal>
     </SafeAreaProvider>
   );
+}
+
+async function performUpdateUserSelfInfoCallout(payload: any) {
+  let body: any = {};
+  Object.keys(payload).forEach((element) => {
+    body[element] = payload[element].value;
+  });
+
+  const url = `${process.env.EXPO_PUBLIC_API_URL}/users/me`;
+  const options = {
+    method: "PUT",
+    credentials: "include" as RequestCredentials,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  };
+  let response = await fetch(url, options);
+  return response;
+}
+
+async function performUpdateUserInfoCallout(payload: any) {
+  let body: any = {};
+  Object.keys(payload).forEach((element) => {
+    body[element] = payload[element].value;
+  });
+
+  const url = `${process.env.EXPO_PUBLIC_API_URL}/users/${body.userName}`;
+  const options = {
+    method: "PUT",
+    credentials: "include" as RequestCredentials,
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  };
+  let response = await fetch(url, options);
+  return response;
 }
