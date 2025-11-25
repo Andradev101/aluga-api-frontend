@@ -66,9 +66,11 @@ export function Login() {
     } else {
       console.log(loginResBody)
       setIsLoginError(true)
-      setLoginErrorMsg(loginResBody?.detail? loginResBody?.detail : "An unexpected error occurred.");
+      setLoginErrorMsg("An unexpected error occurred.");
+    } finally {
+      setIsLoading(false)
     }
-    setIsLoading(false)
+    
   };
 
   return (

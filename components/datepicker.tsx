@@ -5,6 +5,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from "react";
 import { Platform } from "react-native";
 
+
 interface DatePickerProps {
   date: Date; // controlled date value from parent
   onDateChange: (date: Date) => void; // callback to notify parent
@@ -33,63 +34,59 @@ export function DatePicker({ date, onDateChange }: DatePickerProps) {
     showMode('date');
   };
 
-  const showTimepicker = () => {
-    showMode('time');
-  };
-  
   if(Platform.OS === 'web') {
-    return (
-      <Pressable onPress={showDatepicker}>
-            <input
-              type="date"
-              value={date.toISOString().split('T')[0]}
-              onChange={(e) => {
-                const newDate = new Date(e.target.value + 'T00:00:00');
-                console.log("Data selecionada:", newDate);
-                onChange(e, newDate)
-              }}
-            />
-            {/* <Input
-            pointerEvents="none"
-              variant="outline"
-              size="md"
-              isDisabled={false}
-              isReadOnly={true}
-            >
-          <InputField value={date.toLocaleDateString()}/>
-          <InputIcon as={CalendarDaysIcon} />
-        </Input> */}
-      </Pressable>
-
-    
+  return (
+      <Pressable>
+  <div className="relative w-full flex items-center">
+    <input
+      type="date"
+      value={date.toISOString().split('T')[0]}
+      onChange={e => {
+        const newDate = new Date(e.target.value + "T00:00:00");
+        onDateChange(newDate);
+      }}
+      className="
+        w-full
+        px-2 py-2
+        text-base
+        border border-slate-300
+        rounded-lg
+        focus:border-indigo-500
+        focus:ring-2 focus:ring-indigo-300
+        bg-white
+        appearance-none
+      "
+    />
+  </div>
+</Pressable>
     )
   } else {
     return (
-          <>
-            {/* <Button onPress={showDatepicker} title="Pick a date" /> */}
-            {show && (
-              <DateTimePicker
-                testID="dateTimePicker"
-                value={date}
-                mode='date'
-                is24Hour={true}
-                onChange={onChange}
-              />
-            )}
-              <Pressable onPress={showDatepicker}>
-                <Input
-                pointerEvents="none"
-                  variant="outline"
-                  size="md"
-                  isDisabled={false}
-                  isReadOnly={true}
-                >
-                  <InputField value={date.toLocaleDateString()}/>
-                  <InputIcon as={CalendarDaysIcon} />
-                </Input>
-              </Pressable>
-          </>
-        )
+      <>
+        {/* <Button onPress={showDatepicker} title="Pick a date" /> */}
+        {show && (
+          <DateTimePicker
+            testID="dateTimePicker"
+            value={date}
+            mode='date'
+            is24Hour={true}
+            onChange={onChange}
+          />
+        )}
+        <Pressable onPress={showDatepicker}>
+          <Input
+            pointerEvents="none"
+            variant="outline"
+            size="md"
+            isDisabled={false}
+            isReadOnly={true}
+          >
+            <InputField value={date.toLocaleDateString()} />
+            <InputIcon as={CalendarDaysIcon} className='m-2' />
+          </Input>
+        </Pressable>
+      </>
+    )
   }
-  
+
 };

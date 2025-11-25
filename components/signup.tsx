@@ -60,10 +60,20 @@ export function Signup() {
   };
 
   async function handleSubmit() {
+    for (const [key] of Object.entries(userSchema)) {
+      setUserSchema((prev) => ({
+            ...prev,
+            [key]: {
+              ...prev[key],
+              invalidStateMsg: "",
+            },
+          }));
+    }
     setFeedbackMessage("")
     setIsIntegrationLoading(true);
     let invalidState = false;
     for (const [key, fieldProps] of Object.entries(userSchema)) {
+      console.log(key, fieldProps)
       if (!fieldProps.value) {
         setUserSchema((prev) => ({
           ...prev,
@@ -123,13 +133,13 @@ export function Signup() {
               [element.loc[1]]: { ...prev[element.loc[1]], isTouched: true },
             }));
           });
-          setFeedbackMessage("error: Please correct the errors above.");
+          setFeedbackMessage("ERROR: Please correct the errors above.");
         } else {
-          setFeedbackMessage(`error: ${data.detail || "Signup failed."}`);
+          setFeedbackMessage(`ERROR: ${data.detail || "Signup failed."}`);
         }
       }
     } catch (error) {
-      setFeedbackMessage("error: Network error, please try again.");
+      setFeedbackMessage("ERROR: Network error, please try again.");
     }
   }
 
@@ -171,8 +181,8 @@ export function Signup() {
         userSchemaFields.map((field) => {
           if (field === "birthDate") {
             return (userSchemaForm[field] = {
-              value: "1990-01-01",
-              isTouched: false,
+              value: new Date(),
+              isTouched: true,
               invalidStateMsg: "",
             });
           } else {
@@ -185,7 +195,6 @@ export function Signup() {
         });
 
         setUserSchema(userSchemaForm);
-
         setUserSchemaInfo(data.components.schemas.UserSignup.properties);
         setIsUserSchemaReady(true);
       } else {
@@ -194,6 +203,10 @@ export function Signup() {
       // Silently handle error
     }
   }
+  const getDateOnly = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  };
   return (
     <Card size="lg" variant="outline" className="m-3">
       <VStack>
@@ -210,10 +223,7 @@ export function Signup() {
         {isUserSchemaReady &&
           Object.entries(userSchema).map(([key, value]) => {
             const meta = (userSchemaInfo as any)[key]; //god forbid typing
-
-            // console.log(meta)
             if (key === "birthDate") {
-              // console.log("birthDate", userSchema[key].value)
               return (
                 <>
                   <FormControl
@@ -228,15 +238,15 @@ export function Signup() {
                       date={
                         userSchema[key].value
                           ? new Date(userSchema[key].value)
-                          : new Date("1990-01-01")
+                          : getDateOnly()
                       }
                       onDateChange={handleDateChange}
                     />
                     <FormControlError>
                       <FormControlErrorText className="text-red-500">
                         <Alert action="error" variant="solid" className="p-1">
-                          <AlertIcon as={InfoIcon} size="sm" />
-                          <AlertText size="xs">
+                          <AlertIcon as={InfoIcon} size="md"/>
+                          <AlertText size="md" className="max-w-[350px]">
                             {userSchema[key].invalidStateMsg === ""
                               ? "Field cannot be blank."
                               : userSchema[key].invalidStateMsg}
@@ -247,8 +257,8 @@ export function Signup() {
                     <FormControlHelper>
                       <FormControlHelperText>
                         <Alert action="muted" variant="solid" className="p-1">
-                          <AlertIcon as={InfoIcon} size="sm" />
-                          <AlertText size="xs">{meta.description}</AlertText>
+                          <AlertIcon as={InfoIcon} size="md"/>
+                          <AlertText size="md" className="max-w-[350px]">{meta.description}</AlertText>
                         </Alert>
                       </FormControlHelperText>
                     </FormControlHelper>
@@ -302,8 +312,8 @@ export function Signup() {
                   <FormControlError>
                     <FormControlErrorText className="text-red-500">
                       <Alert action="error" variant="solid" className="p-1">
-                        <AlertIcon as={InfoIcon} size="sm" />
-                        <AlertText size="xs">
+                        <AlertIcon as={InfoIcon} size="md"/>
+                        <AlertText size="md" className="max-w-[350px]">
                           {userSchema[key].invalidStateMsg === ""
                             ? "Field cannot be blank."
                             : userSchema[key].invalidStateMsg}
@@ -314,8 +324,8 @@ export function Signup() {
                   <FormControlHelper>
                     <FormControlHelperText>
                       <Alert action="muted" variant="solid" className="p-1">
-                        <AlertIcon as={InfoIcon} size="sm" />
-                        <AlertText size="xs">{meta.description}</AlertText>
+                        <AlertIcon as={InfoIcon} size="md"/>
+                        <AlertText size="md" className="max-w-[350px]">{meta.description}</AlertText>
                       </Alert>
                     </FormControlHelperText>
                   </FormControlHelper>
@@ -329,7 +339,7 @@ export function Signup() {
               variant="solid"
               className="p-2 w-full"
             >
-              <AlertIcon as={InfoIcon} size="sm" />
+              <AlertIcon as={InfoIcon} size="md"/>
               <AlertText size="sm">
                 {feedbackMessage}
                 {!feedbackMessage.toLowerCase().includes("error") && " — redirecting in 3s… " } 
