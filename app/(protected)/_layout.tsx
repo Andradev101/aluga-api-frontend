@@ -35,7 +35,9 @@ export default function ProtectedLayout() {
     <SafeAreaProvider>
       <SafeAreaView edges={["top"]} style={styles.container}>
         <UserNav userData={userData} logout={logout} />
-        <Stack />
+        <Stack>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          </Stack>
       </SafeAreaView>
     </SafeAreaProvider>
   );

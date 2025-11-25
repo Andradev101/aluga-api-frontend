@@ -7,9 +7,9 @@ export default function Logout() {
   
   async function performLogout() {
     await performLogoutCallout();
-    await Storage.deleteValueFor('accessToken');
-    await Storage.deleteValueFor('refreshToken');
-    await Storage.deleteValueFor('user_role');
+    await Storage.remove('accessToken');
+    await Storage.remove('refreshToken');
+    await Storage.remove('user_role');
     router.push('/');
   }
   async function performLogoutCallout() {

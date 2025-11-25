@@ -9,17 +9,36 @@ import HotelsScreen from '@/components/hotel-listing';
 import * as Storage from '@/components/secureStorage';
 import { useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React, { useCallback, useMemo, useState } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import FilterActionSheet, { HotelFilterParams } from '@/components/FilterActionSheet';
-import { Login } from '@/components/login';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function HotelsTabScreen() {
     const [userRole, setUserRole] = useState('');
     const [isFilterVisible, setIsFilterVisible] = useState(false);
     const [appliedFilters, setAppliedFilters] = useState<HotelFilterParams>({ sort: 'id' });
+
+        const { fetchUserData } = useAuth();
+    
+     const [loaded, setLoaded] = useState(false);
+      
+      useEffect(() => {
+          const fetchAndCall = async () => {
+            setLoaded(false)
+            try {
+              await fetchUserData();
+            } catch (error) {
+              console.error("Error fetching user data:", error);
+            } finally {
+              setLoaded(true)
+            }
+          };
+      
+          fetchAndCall();
+        }, [fetchUserData]);
 
     async function getCredentials() {
         let result = await Storage.getValueFor("user_role");
@@ -48,22 +67,15 @@ export default function HotelsTabScreen() {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            <StatusBar style="auto" />
-            
-            {/* <View style={styles.fixedHeader}>
+            {loaded &&             <><><StatusBar style="auto" /><View style={styles.fixedHeader}>
                 {MemoizedHomeHeader}
-            </View> */}
-            <HotelsScreen filters={appliedFilters} /> 
-            <Login></Login>
-            {/* O componente agora deve ser reconhecido corretamente */}
+            </View></><HotelsScreen filters={appliedFilters} /><FilterActionSheet
+                    isOpen={isFilterVisible}
+                    onClose={() => setIsFilterVisible(false)}
+                    onApplyFilters={handleApplyFilters}
+                    initialFilters={appliedFilters} /></>}
 
 
-            <FilterActionSheet
-                isOpen={isFilterVisible}
-                onClose={() => setIsFilterVisible(false)}
-                onApplyFilters={handleApplyFilters}
-                initialFilters={appliedFilters}
-            />
         </SafeAreaView>
     );
 }

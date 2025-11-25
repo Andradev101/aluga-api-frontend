@@ -44,7 +44,7 @@ export default function TabLayout() {
 
       {/* 1. Hotéis (index.tsx) -> Explorar */}
       <Tabs.Screen
-        name="index"
+        name="explorer"
         options={{
           title: 'Explorar',
           tabBarIcon: ({ color }) => <Home size={25} color={color} />,

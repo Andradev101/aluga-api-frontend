@@ -62,7 +62,7 @@ export function Login() {
     let loginResBody = await loginRes.response.json()
     if(loginRes.ok){
       //awaits for the userData value in a useEffect hook to return to perform the router push
-      router.push("/homepage")
+      router.push("/(protected)/(tabs)/explorer")
     } else {
       console.log(loginResBody)
       setIsLoginError(true)

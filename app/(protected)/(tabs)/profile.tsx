@@ -2,9 +2,10 @@ import { useGetSelfInfoAction } from '@/components/getselfinfo';
 import { useRefreshTokenAction } from '@/components/refreshtoken';
 import * as Storage from '@/components/secureStorage';
 import { Button, ButtonText } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useFocusEffect } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { router } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const MenuItem = ({ 
@@ -37,27 +38,37 @@ const MenuItem = ({
 );
 
 export default function ProfileScreen() {
-    const [userRole, setUserRole] = useState('');
+
+    const { fetchUserData, userData, isAuthenticated } = useAuth();
+
+    
+         const [loaded, setLoaded] = useState(false);
+          
+          useEffect(() => {
+              const fetchAndCall = async () => {
+                setLoaded(false)
+                try {
+                  await fetchUserData();
+                } catch (error) {
+                  console.error("Error fetching user data:", error);
+                } finally {
+                  setLoaded(true)
+                }
+              };
+          
+              fetchAndCall();
+            }, [fetchUserData]);
+ 
+
 
     const handleGetSelfInfo = useGetSelfInfoAction();
     const handleRefreshToken = useRefreshTokenAction();
 
-    async function getCredentials() {
-        let result = await Storage.getValueFor("user_role");
-        setUserRole(result != null ? result : '');
-    }
-
-    useFocusEffect(
-        useCallback(() => {
-            getCredentials()
-        }, [])
-    );
-
     const handleLogout = async () => {
         try {
-            await Storage.deleteValueFor('accessToken');
-            await Storage.deleteValueFor('refreshToken');
-            await Storage.deleteValueFor('user_role');
+            await Storage.remove('accessToken');
+            await Storage.remove('refreshToken');
+            await Storage.remove('user_role');
         } catch (error) {
             console.error("Erro durante o logout local:", error);
         }
@@ -73,15 +84,15 @@ export default function ProfileScreen() {
         >
             <Text style={styles.headerTitle}>Minha Conta</Text>
             
-            <View style={styles.infoCard}>
+            {loaded && <><View style={styles.infoCard}>
                 <Ionicons name="person-circle-outline" size={50} color="#dc2626" />
                 <View style={{ marginLeft: 15 }}>
-                    <Text style={styles.userName}>Usuário Logado</Text>
-                    <Text style={styles.userRoleText}>Cargo: {userRole || 'Carregando...'}</Text>
+                    <Text style={styles.userName}>{userData.token_content.userName}</Text>
+                    <Text style={styles.userRoleText}>Cargo: {userData?.token_content?.role ||  'Carregando...'}</Text>
                 </View>
             </View>
 
-            {userRole === "sysAdmin" && (
+            {userData?.token_content?.role === "sysAdmin" && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Ações Administrativas</Text>
                     <MenuItem 
@@ -91,7 +102,7 @@ export default function ProfileScreen() {
                     />
                     <MenuItem 
                         title="Gerenciar Usuários" 
-                        onPress={() => router.push('/users')} 
+                        onPress={() => router.push('/admin')} 
                         iconName="people-outline"
                         isLast={true}
                     />
@@ -103,7 +114,7 @@ export default function ProfileScreen() {
                 
                 <MenuItem 
                     title="Editar Perfil" 
-                    onPress={() => { }} 
+                    onPress={() => router.push('/(protected)/self')} 
                     iconName="person-outline"
                 />
                 <MenuItem 
@@ -130,7 +141,7 @@ export default function ProfileScreen() {
                 />
             </View>
 
-            {userRole === "sysAdmin" && (
+            {userData?.token_content?.role === "sysAdmin" && (
                 <View style={styles.card}>
                     <Text style={styles.cardTitle}>Autenticação (Debug)</Text>
                     
@@ -159,7 +170,7 @@ export default function ProfileScreen() {
                 </Button>
             </View>
             
-            <View style={{ height: 40 }} /> 
+            <View style={{ height: 40 }} /> </>}
         </ScrollView>
     );
 }
