@@ -120,7 +120,7 @@ export default function ModalComponent({
     if(onCloseCallback && actionTaken) onCloseCallback();
   }
 
-  //states
+  // states
   function handleEditState() {
     setModalTitle(`Edit user`);
     setModalEditable(true);
@@ -166,7 +166,7 @@ export default function ModalComponent({
         <ModalContent>
           <ModalHeader>
             <Heading size="2xl">{modalTitle}</Heading>
-            <ModalCloseButton>
+            <ModalCloseButton onPress={handleCloseModal}>
               <Icon as={CloseIcon} />
             </ModalCloseButton>
           </ModalHeader>
@@ -187,7 +187,7 @@ export default function ModalComponent({
               </Alert>
             )}
             {fields.map((field, index) => (
-              <>
+              <React.Fragment key={`fragment-${index}`}>
                 <Text key={`text-${index}`}>{field}</Text>
                 <Input
                   key={`input-${index}`}
@@ -215,7 +215,7 @@ export default function ModalComponent({
                     }
                   ></InputField>
                 </Input>
-              </>
+              </React.Fragment>
             ))}
           </ModalBody>
           <ModalFooter>

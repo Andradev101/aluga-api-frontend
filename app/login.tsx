@@ -1,7 +1,7 @@
 import { Login } from '@/components/login';
 import { VStack } from '@/components/ui/vstack';
-import { ScrollView, Image, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { Image, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function LoginScreen() {
   return (
@@ -9,7 +9,7 @@ export default function LoginScreen() {
       <VStack className="p-6 gap-6">
         {/* Header */}
         <VStack className="items-center gap-2">
-          <TouchableOpacity onPress={() => router.push('/homepage')}>
+          <TouchableOpacity onPress={() => router.push('/')}>
             <Image 
               source={require('@/assets/images/logo.png')} 
               style={{ width: 350, height: 150 }}

@@ -58,18 +58,13 @@ export function Login() {
       setIsLoading(false);
       return;
     }
-    try {
-      let loginRes = await login(usernameInputValue, passwordInputValue);
-      let loginResBody = await loginRes.response.json()
-      if(loginRes.ok){
-        //awaits for the userData value in a useEffect hook to return to perform the router push
-        router.push("/homepage")
-      } else {
-        console.log(loginResBody)
-        setIsLoginError(true)
-        setLoginErrorMsg(loginResBody?.detail? loginResBody?.detail : "An unexpected error occurred.");
-      }
-    } catch (error) {
+    let loginRes = await login(usernameInputValue, passwordInputValue);
+    let loginResBody = await loginRes.response.json()
+    if(loginRes.ok){
+      //awaits for the userData value in a useEffect hook to return to perform the router push
+      router.push("/(protected)/(tabs)/explorer")
+    } else {
+      console.log(loginResBody)
       setIsLoginError(true)
       setLoginErrorMsg("An unexpected error occurred.");
     } finally {
