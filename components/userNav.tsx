@@ -25,7 +25,7 @@ export function UserNav({ userData, logout }: Dependencies) {
   return (
     <HStack className='justify-between bg-primary-500'>
       <Pressable
-        onPress={() => router.push("/homepage")}
+        onPress={() => router.push("/explorer")}
         className="p-4 bg-primary-500"
       >
         <Text className="text-typography-0">Logo</Text>

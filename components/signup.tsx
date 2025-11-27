@@ -17,6 +17,7 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { LinkText } from "@/components/ui/link";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
+import { translateMeta } from "@/constants/translation";
 import { router, Link as RouterLink } from "expo-router";
 import React, { useEffect } from "react";
 import { DatePicker } from "./datepicker";
@@ -113,7 +114,7 @@ export function Signup() {
       const response = await fetch(url, options);
       const data = await response.json();
       if (response.ok) {
-        const msg = data.message || "All good! User Created!";
+        const msg = data.message || "Usuário Criado";
         setFeedbackMessage(msg);
         setTimeout(() => {
           router.push("/login");
@@ -133,13 +134,13 @@ export function Signup() {
               [element.loc[1]]: { ...prev[element.loc[1]], isTouched: true },
             }));
           });
-          setFeedbackMessage("ERROR: Please correct the errors above.");
+          setFeedbackMessage("ERROR: Corrija os erros acima.");
         } else {
-          setFeedbackMessage(`ERROR: ${data.detail || "Signup failed."}`);
+          setFeedbackMessage(`ERROR: ${data.detail || "Cadastro Falhou."}`);
         }
       }
     } catch (error) {
-      setFeedbackMessage("ERROR: Network error, please try again.");
+      setFeedbackMessage("ERROR: Erro de rede, tente novamente.");
     }
   }
 
@@ -210,9 +211,9 @@ export function Signup() {
   return (
     <Card size="lg" variant="outline" className="m-3">
       <VStack>
-        <Heading>Create a new account</Heading>
-        <HStack space="xs">
-          <Heading size={"xs"}>Already have have an account?</Heading>
+        <Heading>Crie uma nova conta</Heading>
+        <HStack space="md">
+          <Heading size="md">Já tem uma conta?</Heading>
           <RouterLink href="/login">
             <LinkText size="xs">Login</LinkText>
           </RouterLink>
@@ -223,6 +224,7 @@ export function Signup() {
         {isUserSchemaReady &&
           Object.entries(userSchema).map(([key, value]) => {
             const meta = (userSchemaInfo as any)[key]; //god forbid typing
+            const translatedMeta = translateMeta(meta);
             if (key === "birthDate") {
               return (
                 <>
@@ -232,7 +234,7 @@ export function Signup() {
                     size="lg"
                   >
                     <FormControlLabel>
-                      <FormControlLabelText>Birth Date</FormControlLabelText>
+                      <FormControlLabelText>{translatedMeta.title}</FormControlLabelText>
                     </FormControlLabel>
                     <DatePicker
                       date={
@@ -248,7 +250,7 @@ export function Signup() {
                           <AlertIcon as={InfoIcon} size="md"/>
                           <AlertText size="md" className="max-w-[350px]">
                             {userSchema[key].invalidStateMsg === ""
-                              ? "Field cannot be blank."
+                            ? translatedMeta["Field cannot be blank."] || "Campo não pode estar vazio."
                               : userSchema[key].invalidStateMsg}
                           </AlertText>
                         </Alert>
@@ -258,7 +260,7 @@ export function Signup() {
                       <FormControlHelperText>
                         <Alert action="muted" variant="solid" className="p-1">
                           <AlertIcon as={InfoIcon} size="md"/>
-                          <AlertText size="md" className="max-w-[350px]">{meta.description}</AlertText>
+                          <AlertText size="md" className="max-w-[350px]">{translatedMeta.description}</AlertText>
                         </Alert>
                       </FormControlHelperText>
                     </FormControlHelper>
@@ -277,7 +279,7 @@ export function Signup() {
                   size="lg"
                 >
                   <FormControlLabel>
-                    <FormControlLabelText>{meta.title}</FormControlLabelText>
+                    <FormControlLabelText>{translatedMeta.title}</FormControlLabelText>
                   </FormControlLabel>
                   <Input>
                     <InputField
@@ -315,7 +317,7 @@ export function Signup() {
                         <AlertIcon as={InfoIcon} size="md"/>
                         <AlertText size="md" className="max-w-[350px]">
                           {userSchema[key].invalidStateMsg === ""
-                            ? "Field cannot be blank."
+                            ? translatedMeta["Field cannot be blank."] || "Campo não pode estar vazio."
                             : userSchema[key].invalidStateMsg}
                         </AlertText>
                       </Alert>
@@ -325,7 +327,7 @@ export function Signup() {
                     <FormControlHelperText>
                       <Alert action="muted" variant="solid" className="p-1">
                         <AlertIcon as={InfoIcon} size="md"/>
-                        <AlertText size="md" className="max-w-[350px]">{meta.description}</AlertText>
+                        <AlertText size="md" className="max-w-[350px]">{translatedMeta.description}</AlertText>
                       </Alert>
                     </FormControlHelperText>
                   </FormControlHelper>
@@ -342,7 +344,7 @@ export function Signup() {
               <AlertIcon as={InfoIcon} size="md"/>
               <AlertText size="sm">
                 {feedbackMessage}
-                {!feedbackMessage.toLowerCase().includes("error") && " — redirecting in 3s… " } 
+                {!feedbackMessage.toLowerCase().includes("error") && " — Redirecionando em 3s… " } 
                 {!feedbackMessage.toLowerCase().includes("error") && <ButtonSpinner color="green" />}
               </AlertText>
             </Alert>
@@ -355,7 +357,7 @@ export function Signup() {
             action="positive"
             onPress={handleSubmit}
           >
-            <ButtonText>Register</ButtonText>
+            <ButtonText>Cadastrar</ButtonText>
             {isIntegrationLoading && <ButtonSpinner color="gray" />}
           </Button>
         )}

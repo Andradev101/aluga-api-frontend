@@ -5,7 +5,7 @@ import { Image, ScrollView, TouchableOpacity } from 'react-native';
 
 export default function LoginScreen() {
   return (
-    <ScrollView className="flex-1 bg-gray-50">
+    <ScrollView className="flex-1 bg-white">
       <VStack className="p-6 gap-6">
         {/* Header */}
         <VStack className="items-center gap-2">

@@ -20,18 +20,20 @@ import {
 import { Text } from "@/components/ui/text";
 import React, { useState } from "react";
 import { Platform } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function ModalComponent({
   content,
   buttonName,
   variant,
-  onCloseCallback
+  onCloseCallback,
+  children
 }: {
   content: any;
   buttonName: string;
   variant: "admin" | "self";
   onCloseCallback?: () => void;
+  children: (openAlert: () => void) => React.ReactNode;
 }) {
   const [isFormEditable, setIsFormEditable] = useState(false);
   const [isIntegrationLoading, setIsIntegrationLoading] = useState(false);
@@ -40,6 +42,7 @@ export default function ModalComponent({
   const [actionTaken, setActionTaken] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
+  const handleOpen = () => setModalVisible(true);
   let backupContent = content;
   //this could be done using a context-based backend callout
   const formFieldsByVariant: Record<"admin" | "self", string[]> = {
@@ -108,21 +111,21 @@ export default function ModalComponent({
   function handleOpenModal() {
     setModalVisible(true);
     setModalEditable(false);
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
   }
   function handleCloseModal() {
     setModalVisible(false);
     setModalEditable(false);
     setIsIntegrationLoading(false);
     setUpdateUserCalloutLoadingMessage("");
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
     resetFields();
     if(onCloseCallback && actionTaken) onCloseCallback();
   }
 
-  // states
+  //states
   function handleEditState() {
-    setModalTitle(`Edit user`);
+    setModalTitle(`Editar usuário`);
     setModalEditable(true);
   }
 
@@ -133,7 +136,7 @@ export default function ModalComponent({
     setModalEditable(false);
     setIsIntegrationLoading(false);
     setUpdateUserCalloutLoadingMessage("");
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
     resetFields();
   }
 
@@ -151,11 +154,12 @@ export default function ModalComponent({
   }
   return (
     <SafeAreaProvider>
-      <SafeAreaView>
-        <Button onPress={handleOpenModal}>
+      {children(handleOpen)}
+      {/* <SafeAreaView>
+        <Button onPress={handleOpenModal} className="rounded-xl">
           <ButtonText>{buttonName ? buttonName : "Details"}</ButtonText>
         </Button>
-      </SafeAreaView>
+      </SafeAreaView> */}
 
       <Modal
         isOpen={showModal}
@@ -166,7 +170,7 @@ export default function ModalComponent({
         <ModalContent>
           <ModalHeader>
             <Heading size="2xl">{modalTitle}</Heading>
-            <ModalCloseButton onPress={handleCloseModal}>
+            <ModalCloseButton>
               <Icon as={CloseIcon} />
             </ModalCloseButton>
           </ModalHeader>
@@ -187,7 +191,7 @@ export default function ModalComponent({
               </Alert>
             )}
             {fields.map((field, index) => (
-              <React.Fragment key={`fragment-${index}`}>
+              <>
                 <Text key={`text-${index}`}>{field}</Text>
                 <Input
                   key={`input-${index}`}
@@ -215,7 +219,7 @@ export default function ModalComponent({
                     }
                   ></InputField>
                 </Input>
-              </React.Fragment>
+              </>
             ))}
           </ModalBody>
           <ModalFooter>
