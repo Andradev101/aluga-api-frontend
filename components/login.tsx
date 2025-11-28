@@ -18,7 +18,8 @@ import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
 import { router, Link as RouterLink } from 'expo-router';
 import React from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
+import { Card } from './ui/card';
 
 
 
@@ -61,17 +62,18 @@ export function Login() {
     let loginResBody = await loginRes.response.json()
     if(loginRes.ok){
       //awaits for the userData value in a useEffect hook to return to perform the router push
-      router.push("/homepage")
+      router.push("/(protected)/(tabs)/explorer")
     } else {
       console.log(loginResBody)
       setIsLoginError(true)
-      setLoginErrorMsg(loginResBody?.detail? loginResBody?.detail : "An unexpected error occurred.");
+      setLoginErrorMsg(loginResBody.detail ?? "An unexpected error occurred.");
     }
-    setIsLoading(false)
+    setIsLoading(false);
   };
 
   return (
-      <VStack>
+      <Card size="lg" variant="outline" className="m-3">
+      <VStack className='w-100'>
         <Heading>Login to your account</Heading>
         <HStack space="xs">
           <Heading size={"xs"}>Don&apos;t have an account?</Heading>
@@ -104,11 +106,7 @@ export function Login() {
           <FormControlError>
             <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
             <FormControlErrorText className="text-red-500">
-              <Text>{loginErrorMsg}</Text>
-            </FormControlErrorText>
-            <FormControlErrorIcon as={AlertCircleIcon} className="text-red-500" />
-            <FormControlErrorText className="text-red-500">
-              Invalid.
+              <Text>{loginErrorMsg || "Cannot be blank."}</Text>
             </FormControlErrorText>
           </FormControlError>
         </FormControl>
@@ -159,8 +157,19 @@ export function Login() {
             </FormControlErrorText>
           </FormControlError>
         </FormControl>
-
+        
+        {Platform.OS !== 'web' &&
         <Button
+          className="w-full"
+          size="lg"
+          variant="solid"
+          onPress={handleSubmit}
+        >
+          <ButtonText>Login</ButtonText>
+          {isLoading && <ButtonSpinner color="gray" />}
+        </Button>}
+        
+        {Platform.OS === 'web' && <Button
           className="w-fit self-end mt-4"
           size="sm"
           variant="outline"
@@ -168,7 +177,8 @@ export function Login() {
         >
           <ButtonText>Login</ButtonText>
           {isLoading && <ButtonSpinner color="gray" />}
-        </Button>
+          </Button>}
       </VStack>
+      </Card>
   );
 }

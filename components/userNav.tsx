@@ -1,6 +1,5 @@
 import {
   Avatar,
-  AvatarBadge,
   AvatarFallbackText
 } from '@/components/ui/avatar';
 import { HStack } from "@/components/ui/hstack";
@@ -26,7 +25,7 @@ export function UserNav({ userData, logout }: Dependencies) {
   return (
     <HStack className='justify-between bg-primary-500'>
       <Pressable
-        onPress={() => router.push("/homepage")}
+        onPress={() => router.push("/explorer")}
         className="p-4 bg-primary-500"
       >
         <Text className="text-typography-0">Logo</Text>
@@ -44,7 +43,6 @@ export function UserNav({ userData, logout }: Dependencies) {
                 <HStack space="md" reversed={false}>
                   <Avatar size="sm">
                     <AvatarFallbackText>{userData?.token_content?.userName}</AvatarFallbackText>
-                    <AvatarBadge />
                   </Avatar>
                   <Text className="text-typography-0">{(userData?.token_content?.userName)}</Text>
                   <Icon as={ChevronDownIcon} size="lg" className="text-typography-0"/>

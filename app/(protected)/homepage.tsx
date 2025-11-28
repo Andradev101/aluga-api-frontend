@@ -1,9 +1,8 @@
-import { Button, ButtonText } from '@/components/ui/button';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
 import { router } from 'expo-router';
 import React, { useEffect } from 'react';
-import { Image, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Image, ScrollView, TouchableOpacity } from 'react-native';
 
 
 export default function HomeScreen() {
@@ -37,49 +36,8 @@ export default function HomeScreen() {
 
         {/* Content */}
         <VStack className="items-center gap-4">
-          <Text>Homepage auth</Text>
-
-          {/* Navigation Buttons */}
-          <Button
-            className="bg-aluga-500 hover:bg-aluga-600"
-            onPress={() => router.push('/reviews')}
-          >
-            <ButtonText className="text-white font-semibold">🌟 Ver Avaliações de Hotéis</ButtonText>
-          </Button>
-
-          <Button
-            className="bg-blue-500 hover:bg-blue-600"
-            onPress={() => router.push('/hotels')}
-          >
-            <ButtonText className="text-white font-semibold">🏨 Ver Catálogo de Hotéis</ButtonText>
-          </Button>
-
-          { userData?.token_content?.role === "sysAdmin" &&
-             <Button
-                className="bg-green-600 hover:bg-green-700" 
-                onPress={() => router.push('/hotels/create-hotel')} // Rota para a nova tela
-             >
-                <ButtonText className="text-white font-semibold">✨ Cadastrar Novo Hotel</ButtonText>
-             </Button>
-          }
-
-          {/* 🔹 Novo botão para reservas */}
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onPress={() => router.push('/criarReserva')}
-          >
-            <ButtonText className="text-white font-semibold">📅 Fazer Reserva</ButtonText>
-          </Button>
-
-          {/* 🔹 Novo botão para ver as reservas */}
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onPress={() => router.push('/myReservations')}
-          >
-            <ButtonText className="text-white font-semibold"> Visualizar Reservas</ButtonText>
-          </Button>
-          {/* <HotelsScreen/> */}
         </VStack>
+
       </VStack>
     </ScrollView>
   );

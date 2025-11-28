@@ -1,4 +1,4 @@
-// app/myReservations.tsx
+// app/(tabs)/myReservations.tsx
 import { Badge } from '@/components/ui/badge';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -11,7 +11,6 @@ import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, RefreshControl, ScrollView, TouchableOpacity } from 'react-native';
 
-// ✅ FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
 const localISOStringToDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day, 12, 0, 0);
@@ -69,13 +68,12 @@ export default function MyReservations() {
         }
         throw new Error(`Erro ${res.status}`);
       }
-      
+
       const data: Booking[] = await res.json();
 
-      // Filtrar apenas reservas ativas (futuras ou em andamento)
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
-      
+
       const ativas = data.filter(b => {
         const checkout = localISOStringToDate(b.check_out);
         checkout.setHours(0, 0, 0, 0);
@@ -137,7 +135,7 @@ export default function MyReservations() {
             </Text>
             <Text className="text-sm text-gray-600 font-medium mt-2">
               🛏️ {booking.room.name}
-            </Text>            
+            </Text>
             <Text className="text-sm text-gray-600 font-medium">
               📦 {booking.rooms_booked} {booking.rooms_booked === 1 ? 'quarto' : 'quartos'}
             </Text>
@@ -154,7 +152,7 @@ export default function MyReservations() {
           </Text>
 
           <HStack className="items-center justify-end pt-2 gap-2">
-                       
+
             <Button
               size="sm"
               variant="outline"
@@ -190,30 +188,28 @@ export default function MyReservations() {
     );
   };
 
- 
+
   return (
     <ScrollView
       className="flex-1 bg-gray-50"
       refreshControl={
-        <RefreshControl 
-          refreshing={refreshing} 
-          onRefresh={() => fetchBookings(true)} 
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => fetchBookings(true)}
         />
       }
     >
       <VStack className="p-6 gap-6">
-        {/* Header com logo */}
         <VStack className="items-center gap-2">
-          <TouchableOpacity onPress={() => router.push('/homepage')}>
-            <Image 
-              source={require('@/assets/images/logo.png')} 
+          <TouchableOpacity onPress={() => router.push('/')}>
+            <Image
+              source={require('@/assets/images/logo.png')}
               style={{ width: 350, height: 150 }}
               resizeMode="contain"
             />
           </TouchableOpacity>
         </VStack>
 
-        {/* Título */}
         <VStack className="items-center">
           <Heading size="lg" className="text-blue-800 font-bold">
             Minhas Reservas
@@ -223,7 +219,6 @@ export default function MyReservations() {
           </Text>
         </VStack>
 
-        {/* Loading */}
         {loading && (
           <Card className="p-6 bg-white border border-blue-100 rounded-xl">
             <HStack className="items-center justify-center gap-3">
@@ -233,17 +228,15 @@ export default function MyReservations() {
           </Card>
         )}
 
-        {/* Lista de reservas */}
         {!loading && bookings.length > 0 && (
           <VStack className="gap-4">
             {bookings.map((booking, index) => (
               <BookingCard key={booking.id} booking={booking} index={index} />
             ))}
 
-            {/* Botão Voltar para o início */}
             <Button
               className="mt-4 bg-blue-700 hover:bg-blue-800 px-5 py-3 rounded-lg flex-row items-center justify-center"
-              onPress={() => router.push('/homepage')}
+              onPress={() => router.push('/')}
             >
               <HStack className="items-center gap-2">
                 <Ionicons name="home-outline" size={18} color="white" />
@@ -255,7 +248,6 @@ export default function MyReservations() {
           </VStack>
         )}
 
-        {/* Estado vazio */}
         {!loading && bookings.length === 0 && (
           <Card className="p-8 bg-gray-50 border border-gray-200 rounded-xl items-center">
             <Ionicons name="bed-outline" size={60} color="#9CA3AF" />
@@ -269,7 +261,7 @@ export default function MyReservations() {
               </Text>
               <Button
                 className="mt-4 bg-blue-700 hover:bg-blue-800 px-5 py-2 rounded-lg"
-                onPress={() => router.push('/homepage')}
+                onPress={() => router.push('/')}
               >
                 <ButtonText className="text-white font-semibold">
                   Buscar Hotéis

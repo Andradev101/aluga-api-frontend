@@ -1,6 +1,5 @@
 import { Center } from '@/components/ui/center';
 import { Spinner } from '@/components/ui/spinner';
-import { UserNav } from "@/components/userNav";
 import { useAuth } from "@/hooks/useAuth";
 import { Stack } from "expo-router";
 import { useEffect } from 'react';
@@ -34,8 +33,13 @@ export default function ProtectedLayout() {
   return (
     <SafeAreaProvider>
       <SafeAreaView edges={["top"]} style={styles.container}>
-        <UserNav userData={userData} logout={logout} />
-        <Stack />
+        {/* <UserNav userData={userData} logout={logout} /> */}
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="admin" options={{ headerShown: false }} />
+          <Stack.Screen name="authrouteexample" options={{ headerShown: false }} />
+          <Stack.Screen name="homepage" options={{ headerShown: false }} />
+        </Stack>
       </SafeAreaView>
     </SafeAreaProvider>
   );

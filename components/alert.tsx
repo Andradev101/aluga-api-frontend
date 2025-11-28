@@ -16,15 +16,18 @@ import { Alert, AlertIcon, AlertText } from './ui/alert';
 interface AlertComponentProps {
   content: any;
   children: (openAlert: () => void) => React.ReactNode;
+  onCloseCallback?: () => void
 }
 
-export function AlertComponent({ content, children }: AlertComponentProps) {
+export function AlertComponent({ content, children, onCloseCallback}: AlertComponentProps) {
   const [showAlertDialog, setShowAlertDialog] = React.useState(false);
+  const [actionTaken, setActionTaken] = React.useState(false);
   const handleOpen = () => setShowAlertDialog(true);
   function handleClose() {
     setShowAlertDialog(false)
     setIsLoading(false)
     setShowIntegrationFeedback("")
+    if(onCloseCallback && actionTaken) onCloseCallback()
   }
 
   const [isLoading, setIsLoading] = React.useState(false);
@@ -35,6 +38,7 @@ export function AlertComponent({ content, children }: AlertComponentProps) {
     let res = await performDeleteUserCallout(payload)
     let resBody = await res.json()
     if(res.ok) {
+      setActionTaken(true)
       setShowIntegrationFeedback(resBody.message)
     } else {
       setShowIntegrationFeedback("ERROR: " + resBody.detail)

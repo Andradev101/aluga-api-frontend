@@ -21,6 +21,7 @@ export function useAuth() {
         console.log("valid credentials")
         const res = await credentialsRes.json();
         setUserData(res);
+        console.log(res);
         setIsAuthenticated(true);
       } else {
         // Try refresh token

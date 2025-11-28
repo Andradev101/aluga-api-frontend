@@ -1,76 +1,91 @@
 // components/hotel-listing.tsx
 
 import { getAllHotels } from '@/services/hotels-api';
-import { HotelCardOut } from '@/types/hotels';
+import { HotelCardOut, HotelSearchParams } from '@/types/hotels'; // 🚨 NOVO: Importando HotelSearchParams
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Button, ButtonText } from './ui/button';
+import {
+    ActivityIndicator,
+    FlatList,
+    Image,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
 
-// --- Componente de Card (Item da Lista) ---
+// Importação da tipagem de filtros (do ActionSheet)
+import { HotelFilterParams } from './FilterActionSheet';
+
+// Interface agora requer a prop 'filters'
+interface HotelsScreenProps {
+    filters: HotelFilterParams;
+}
+
 const HotelCard: React.FC<{ hotel: HotelCardOut }> = ({ hotel }) => {
 
-    // Obtém o preço a ser exibido (disponível > geral)
     const displayPrice = hotel.min_price_available || hotel.min_price_general;
 
-    // Renderiza estrelas com base no valor
     const renderStars = () => {
-        const starsCount = Math.round(hotel.stars || 0);
-        const starIcons = '⭐️'.repeat(starsCount);
-        return <Text style={styles.stars}>{starIcons} ({hotel.stars?.toFixed(1)})</Text>;
+        const rating = hotel.stars || 0;
+
+        return (
+            <Text style={styles.starsContainer}>
+                <Text style={styles.starIcon}>★</Text>
+                <Text style={styles.starRating}>{rating.toFixed(1)}</Text>
+            </Text>
+        );
     };
 
-    // Função para lidar com o clique de reserva - agora só passa o hotel
-    const handleReserve = (e: any) => {
-        // Impede que o TouchableOpacity pai seja acionado
-        e.stopPropagation(); 
-        
-        // Navega para a tela de reserva passando apenas os dados do hotel
+    const handleCardPress = () => {
         router.push({
-            pathname: '/criarReserva',
+            pathname: '/hotels/[hotelId]',
             params: {
-                hotelName: hotel.name,
-                hotelId: hotel.id.toString(),
+                hotelId: hotel.id.toString()
             },
         });
-    };
+    }
 
     return (
         <TouchableOpacity
             style={styles.cardContainer}
-            // TODO: implementar tela de detalhes do hotel.
-            // onPress={() => router.push(`/hotels/${hotel.id}`)}
+            onPress={handleCardPress}
         >
             <Image
-                source={{ uri: hotel.thumbnail || 'https://placehold.co/100x100?text=Sem+Foto' }}
-                style={styles.thumbnail}
+                source={{ uri: hotel.thumbnail || 'https://placehold.co/600x400?text=Sem+Foto' }}
+                style={styles.cardImage}
+                resizeMode="cover"
             />
+
             <View style={styles.cardDetails}>
-                <Text style={styles.hotelName}>{hotel.name}</Text>
-                <Text style={styles.location}>{hotel.city} - {hotel.neighborhood}</Text>
+
                 <View style={styles.infoRow}>
-                    {renderStars()}
+                    <Text style={styles.locationAirbnb}>
+                        {hotel.city} - {hotel.neighborhood}
+                    </Text>
+                </View>
+
+                <Text style={styles.hotelNameAirbnb}>
+                    {hotel.name}
+                </Text>
+
+                <View style={styles.priceRowAirbnb}>
+                    <Text style={styles.priceAirbnb}>
+                        {displayPrice ? `R$ ${displayPrice.toFixed(2)} / noite` : 'Preço indisponível'}
+                    </Text>
                     {hotel.distance_km !== null && (
-                        <Text style={styles.distance}>| {hotel.distance_km.toFixed(1)} km</Text>
+                        <Text style={styles.distance}>· {hotel.distance_km.toFixed(1)} km</Text>
                     )}
                 </View>
-                <Text style={styles.price}>
-                    {displayPrice ? `A partir de R$ ${displayPrice.toFixed(2)}` : 'Preço indisponível'}
-                </Text>
-                {/* Botão para fazer reserva */}
-                <Button
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onPress={handleReserve}
-                >
-                    <ButtonText className="text-white font-semibold">📅 Fazer Reserva</ButtonText>
-                </Button>
+
+                {renderStars()}
             </View>
         </TouchableOpacity>
     );
 };
 
-// --- Tela Principal de Hotéis ---
-export default function HotelsScreen() {
+// O componente agora recebe 'filters'
+export default function HotelsScreen({ filters }: HotelsScreenProps) {
     const [hotels, setHotels] = useState<HotelCardOut[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -81,8 +96,16 @@ export default function HotelsScreen() {
                 setLoading(true);
                 setError(null);
 
-                // Chamada à API com filtros padrão (ou sem filtros)
-                const hotelList = await getAllHotels({});
+                // 🚨 CORREÇÃO FINAL: Filtra o objeto e faz o CAST para HotelSearchParams.
+                // Isso resolve a incompatibilidade de tipo na chamada da API.
+                const apiFilters = Object.fromEntries(
+                    Object.entries(filters).filter(([, value]) => 
+                        value !== null && value !== undefined && value !== ''
+                    )
+                ) as HotelSearchParams; // <--- Tipagem alterada para o tipo esperado pela API
+                
+                // Chamada à API com os filtros limpos
+                const hotelList = await getAllHotels(apiFilters);
 
                 setHotels(hotelList);
             } catch (err) {
@@ -93,8 +116,9 @@ export default function HotelsScreen() {
             }
         };
 
+        // O useEffect roda sempre que 'filters' (o objeto de estado) muda
         loadHotels();
-    }, []);
+    }, [filters]); 
 
     if (loading) {
         return (
@@ -118,7 +142,7 @@ export default function HotelsScreen() {
         return (
             <View style={styles.centerContainer}>
                 <Text style={styles.errorText}>Nenhum hotel encontrado com os filtros atuais.</Text>
-                <TouchableOpacity onPress={() => {/* Lógica para resetar filtros */ }}>
+                <TouchableOpacity onPress={() => {}}>
                     <Text style={styles.resetButtonText}>Limpar Filtros</Text>
                 </TouchableOpacity>
             </View>
@@ -131,15 +155,17 @@ export default function HotelsScreen() {
             keyExtractor={(item) => item.id.toString()}
             renderItem={({ item }) => <HotelCard hotel={item} />}
             contentContainerStyle={styles.listContent}
-            ListHeaderComponent={<Text style={styles.headerTitle}>Resultados da Busca</Text>}
+            ListHeaderComponent={
+                <Text style={styles.headerTitle}>Resultados da Busca</Text>
+            }
         />
     );
 }
 
-// --- Estilos ---
 const styles = StyleSheet.create({
     listContent: {
         paddingHorizontal: 16,
+        paddingTop: 10,
         paddingVertical: 10,
         backgroundColor: '#f8f8f8',
     },
@@ -150,57 +176,82 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     cardContainer: {
-        flexDirection: 'row',
         backgroundColor: 'white',
-        borderRadius: 8,
-        marginBottom: 10,
+        borderRadius: 15,
+        marginBottom: 20,
         overflow: 'hidden',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
         elevation: 2,
     },
-    thumbnail: {
-        width: 100,
-        height: 100,
-        marginRight: 10,
+    cardImage: {
+        width: '100%',
+        height: 250,
+        borderTopLeftRadius: 15,
+        borderTopRightRadius: 15,
+        marginBottom: 8,
     },
     cardDetails: {
         flex: 1,
-        padding: 10,
-        justifyContent: 'center',
-    },
-    hotelName: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#1f2937',
-        marginBottom: 2,
-    },
-    location: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginBottom: 5,
+        paddingHorizontal: 12,
+        paddingBottom: 12,
+        position: 'relative',
     },
     infoRow: {
         flexDirection: 'row',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        marginBottom: 3,
+        marginBottom: 2,
     },
-    stars: {
+    priceRowAirbnb: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginTop: 5,
+    },
+    locationAirbnb: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        flexShrink: 1,
+        marginRight: 80,
+    },
+    hotelNameAirbnb: {
         fontSize: 14,
-        color: '#f59e0b',
+        color: '#6b7280',
+        marginBottom: 2,
+        fontWeight: '400',
+    },
+    priceAirbnb: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginRight: 4,
+    },
+    starsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'transparent',
+        position: 'absolute',
+        top: 8,
+        right: 12,
+    },
+    starIcon: {
+        fontSize: 14,
+        color: '#1f2937',
+        marginRight: 4,
+    },
+    starRating: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#1f2937',
     },
     distance: {
-        fontSize: 12,
+        fontSize: 14,
         color: '#6b7280',
-        marginLeft: 5,
-    },
-    price: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: '#dc2626',
-        marginTop: 5,
+        marginLeft: 4,
+        fontWeight: '400',
     },
     centerContainer: {
         flex: 1,

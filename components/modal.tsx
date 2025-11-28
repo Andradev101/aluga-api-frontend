@@ -20,34 +20,37 @@ import {
 import { Text } from "@/components/ui/text";
 import React, { useState } from "react";
 import { Platform } from "react-native";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function ModalComponent({
   content,
   buttonName,
   variant,
+  onCloseCallback,
+  children
 }: {
   content: any;
   buttonName: string;
   variant: "admin" | "self";
+  onCloseCallback?: () => void;
+  children: (openAlert: () => void) => React.ReactNode;
 }) {
   const [isFormEditable, setIsFormEditable] = useState(false);
   const [isIntegrationLoading, setIsIntegrationLoading] = useState(false);
   const [updateUserCalloutLoadingMessage, setUpdateUserCalloutLoadingMessage] =
-    useState("");
+  useState("");
+  const [actionTaken, setActionTaken] = useState(false);
   const [modalTitle, setModalTitle] = useState("");
   const [showModal, setModalVisible] = useState(false);
+  const handleOpen = () => setModalVisible(true);
   let backupContent = content;
   //this could be done using a context-based backend callout
   const formFieldsByVariant: Record<"admin" | "self", string[]> = {
     admin: [
       "userName",
       "password",
-      "birthDate",
       "emailAddress",
       "phoneNumber",
-      "firstName",
-      "lastName",
       "address",
     ],
     self: ["emailAddress", "phoneNumber"],
@@ -79,11 +82,15 @@ export default function ModalComponent({
 
       if (res.ok) {
         setUpdateUserCalloutLoadingMessage(body.message);
+        setActionTaken(true)
       } else {
-        const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
-        setUpdateUserCalloutLoadingMessage(
-          `ERROR: Please check these fields: [${errors.join(", ")}]`
-        );
+        if(typeof body.detail === "string") setUpdateUserCalloutLoadingMessage("ERROR: "+body.detail)
+        else {
+          const errors = body.detail?.map((x: any) => x.loc?.[0]) ?? [];
+          setUpdateUserCalloutLoadingMessage(
+            `ERROR: Please check these fields: [${errors.join(", ")}]`
+          );
+        }
       }
     };
 
@@ -104,20 +111,21 @@ export default function ModalComponent({
   function handleOpenModal() {
     setModalVisible(true);
     setModalEditable(false);
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
   }
   function handleCloseModal() {
     setModalVisible(false);
     setModalEditable(false);
     setIsIntegrationLoading(false);
     setUpdateUserCalloutLoadingMessage("");
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
     resetFields();
+    if(onCloseCallback && actionTaken) onCloseCallback();
   }
 
   //states
   function handleEditState() {
-    setModalTitle(`Edit user`);
+    setModalTitle(`Editar usuário`);
     setModalEditable(true);
   }
 
@@ -128,7 +136,7 @@ export default function ModalComponent({
     setModalEditable(false);
     setIsIntegrationLoading(false);
     setUpdateUserCalloutLoadingMessage("");
-    setModalTitle(`User Details`);
+    setModalTitle(`Detalhes do usuário`);
     resetFields();
   }
 
@@ -146,11 +154,12 @@ export default function ModalComponent({
   }
   return (
     <SafeAreaProvider>
-      <SafeAreaView>
-        <Button onPress={handleOpenModal}>
+      {children(handleOpen)}
+      {/* <SafeAreaView>
+        <Button onPress={handleOpenModal} className="rounded-xl">
           <ButtonText>{buttonName ? buttonName : "Details"}</ButtonText>
         </Button>
-      </SafeAreaView>
+      </SafeAreaView> */}
 
       <Modal
         isOpen={showModal}
@@ -189,7 +198,7 @@ export default function ModalComponent({
                   variant="outline"
                   size="sm"
                   className="w-full"
-                  isDisabled={!isFormEditable}
+                  isDisabled={!isFormEditable || field === "userName"}
                   isInvalid={false}
                   isReadOnly={false}
                 >

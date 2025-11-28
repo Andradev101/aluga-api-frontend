@@ -17,7 +17,8 @@ import { Input, InputField, InputIcon, InputSlot } from "@/components/ui/input";
 import { LinkText } from "@/components/ui/link";
 import { Spinner } from "@/components/ui/spinner";
 import { VStack } from "@/components/ui/vstack";
-import { Link as RouterLink } from "expo-router";
+import { translateMeta } from "@/constants/translation";
+import { router, Link as RouterLink } from "expo-router";
 import React, { useEffect } from "react";
 import { DatePicker } from "./datepicker";
 
@@ -36,7 +37,7 @@ export function Signup() {
   useEffect(() => {
     handleGetUserSchema();
   }, []);
-
+  const [feedbackMessage, setFeedbackMessage] = React.useState("");
   const [isIntegrationLoading, setIsIntegrationLoading] = React.useState(false);
   const [isUserSchemaReady, setIsUserSchemaReady] = React.useState(false);
   const [userSchemaInfo, setUserSchemaInfo] = React.useState({});
@@ -60,9 +61,20 @@ export function Signup() {
   };
 
   async function handleSubmit() {
+    for (const [key] of Object.entries(userSchema)) {
+      setUserSchema((prev) => ({
+            ...prev,
+            [key]: {
+              ...prev[key],
+              invalidStateMsg: "",
+            },
+          }));
+    }
+    setFeedbackMessage("")
     setIsIntegrationLoading(true);
     let invalidState = false;
     for (const [key, fieldProps] of Object.entries(userSchema)) {
+      console.log(key, fieldProps)
       if (!fieldProps.value) {
         setUserSchema((prev) => ({
           ...prev,
@@ -102,6 +114,11 @@ export function Signup() {
       const response = await fetch(url, options);
       const data = await response.json();
       if (response.ok) {
+        const msg = data.message || "Usuário Criado";
+        setFeedbackMessage(msg);
+        setTimeout(() => {
+          router.push("/login");
+        }, 3000);
       } else {
         if (Array.isArray(data.detail)) {
           data.detail.forEach((element: any) => {
@@ -117,12 +134,13 @@ export function Signup() {
               [element.loc[1]]: { ...prev[element.loc[1]], isTouched: true },
             }));
           });
+          setFeedbackMessage("ERROR: Corrija os erros acima.");
         } else {
-          alert(data.detail || "Erro no cadastro");
+          setFeedbackMessage(`ERROR: ${data.detail || "Cadastro Falhou."}`);
         }
       }
     } catch (error) {
-      // Silently handle error
+      setFeedbackMessage("ERROR: Erro de rede, tente novamente.");
     }
   }
 
@@ -164,8 +182,8 @@ export function Signup() {
         userSchemaFields.map((field) => {
           if (field === "birthDate") {
             return (userSchemaForm[field] = {
-              value: "1990-01-01",
-              isTouched: false,
+              value: new Date(),
+              isTouched: true,
               invalidStateMsg: "",
             });
           } else {
@@ -178,7 +196,6 @@ export function Signup() {
         });
 
         setUserSchema(userSchemaForm);
-
         setUserSchemaInfo(data.components.schemas.UserSignup.properties);
         setIsUserSchemaReady(true);
       } else {
@@ -187,12 +204,16 @@ export function Signup() {
       // Silently handle error
     }
   }
+  const getDateOnly = () => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  };
   return (
     <Card size="lg" variant="outline" className="m-3">
       <VStack>
-        <Heading>Create a new account</Heading>
-        <HStack space="xs">
-          <Heading size={"xs"}>Already have have an account?</Heading>
+        <Heading>Crie uma nova conta</Heading>
+        <HStack space="md">
+          <Heading size="md">Já tem uma conta?</Heading>
           <RouterLink href="/login">
             <LinkText size="xs">Login</LinkText>
           </RouterLink>
@@ -203,10 +224,8 @@ export function Signup() {
         {isUserSchemaReady &&
           Object.entries(userSchema).map(([key, value]) => {
             const meta = (userSchemaInfo as any)[key]; //god forbid typing
-
-            // console.log(meta)
+            const translatedMeta = translateMeta(meta);
             if (key === "birthDate") {
-              // console.log("birthDate", userSchema[key].value)
               return (
                 <>
                   <FormControl
@@ -215,23 +234,23 @@ export function Signup() {
                     size="lg"
                   >
                     <FormControlLabel>
-                      <FormControlLabelText>Birth Date</FormControlLabelText>
+                      <FormControlLabelText>{translatedMeta.title}</FormControlLabelText>
                     </FormControlLabel>
                     <DatePicker
                       date={
                         userSchema[key].value
                           ? new Date(userSchema[key].value)
-                          : new Date("1990-01-01")
+                          : getDateOnly()
                       }
                       onDateChange={handleDateChange}
                     />
                     <FormControlError>
                       <FormControlErrorText className="text-red-500">
                         <Alert action="error" variant="solid" className="p-1">
-                          <AlertIcon as={InfoIcon} size="sm" />
-                          <AlertText size="xs">
+                          <AlertIcon as={InfoIcon} size="md"/>
+                          <AlertText size="md" className="max-w-[350px]">
                             {userSchema[key].invalidStateMsg === ""
-                              ? "Field cannot be blank."
+                            ? translatedMeta["Field cannot be blank."] || "Campo não pode estar vazio."
                               : userSchema[key].invalidStateMsg}
                           </AlertText>
                         </Alert>
@@ -240,8 +259,8 @@ export function Signup() {
                     <FormControlHelper>
                       <FormControlHelperText>
                         <Alert action="muted" variant="solid" className="p-1">
-                          <AlertIcon as={InfoIcon} size="sm" />
-                          <AlertText size="xs">{meta.description}</AlertText>
+                          <AlertIcon as={InfoIcon} size="md"/>
+                          <AlertText size="md" className="max-w-[350px]">{translatedMeta.description}</AlertText>
                         </Alert>
                       </FormControlHelperText>
                     </FormControlHelper>
@@ -260,7 +279,7 @@ export function Signup() {
                   size="lg"
                 >
                   <FormControlLabel>
-                    <FormControlLabelText>{meta.title}</FormControlLabelText>
+                    <FormControlLabelText>{translatedMeta.title}</FormControlLabelText>
                   </FormControlLabel>
                   <Input>
                     <InputField
@@ -295,10 +314,10 @@ export function Signup() {
                   <FormControlError>
                     <FormControlErrorText className="text-red-500">
                       <Alert action="error" variant="solid" className="p-1">
-                        <AlertIcon as={InfoIcon} size="sm" />
-                        <AlertText size="xs">
+                        <AlertIcon as={InfoIcon} size="md"/>
+                        <AlertText size="md" className="max-w-[350px]">
                           {userSchema[key].invalidStateMsg === ""
-                            ? "Field cannot be blank."
+                            ? translatedMeta["Field cannot be blank."] || "Campo não pode estar vazio."
                             : userSchema[key].invalidStateMsg}
                         </AlertText>
                       </Alert>
@@ -307,8 +326,8 @@ export function Signup() {
                   <FormControlHelper>
                     <FormControlHelperText>
                       <Alert action="muted" variant="solid" className="p-1">
-                        <AlertIcon as={InfoIcon} size="sm" />
-                        <AlertText size="xs">{meta.description}</AlertText>
+                        <AlertIcon as={InfoIcon} size="md"/>
+                        <AlertText size="md" className="max-w-[350px]">{translatedMeta.description}</AlertText>
                       </Alert>
                     </FormControlHelperText>
                   </FormControlHelper>
@@ -316,6 +335,20 @@ export function Signup() {
               );
             }
           })}
+          {feedbackMessage !== "" && (
+            <Alert
+              action={feedbackMessage.toLowerCase().includes("error") ? "error" : "success"}
+              variant="solid"
+              className="p-2 w-full"
+            >
+              <AlertIcon as={InfoIcon} size="md"/>
+              <AlertText size="sm">
+                {feedbackMessage}
+                {!feedbackMessage.toLowerCase().includes("error") && " — Redirecionando em 3s… " } 
+                {!feedbackMessage.toLowerCase().includes("error") && <ButtonSpinner color="green" />}
+              </AlertText>
+            </Alert>
+          )}
         {isUserSchemaReady && (
           <Button
             className="w-full self-end mt-4"
@@ -324,7 +357,7 @@ export function Signup() {
             action="positive"
             onPress={handleSubmit}
           >
-            <ButtonText>Register</ButtonText>
+            <ButtonText>Cadastrar</ButtonText>
             {isIntegrationLoading && <ButtonSpinner color="gray" />}
           </Button>
         )}

@@ -13,14 +13,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { VStack } from "@/components/ui/vstack";
-import { CircleAlert } from "lucide-react-native";
+import { router } from "expo-router";
+import { CircleAlert, EditIcon } from "lucide-react-native";
 import React, { useEffect } from "react";
-import { ScrollView } from "react-native";
+import { Platform, ScrollView } from "react-native";
 import { AlertComponent } from "./alert";
 import { Alert, AlertIcon } from "./ui/alert";
-import { Button, ButtonIcon, ButtonSpinner } from "./ui/button";
+import { Button, ButtonIcon, ButtonSpinner, ButtonText } from "./ui/button";
 import { Center } from "./ui/center";
 import { HStack } from "./ui/hstack";
+import { Text } from "./ui/text";
 
 
 export function ManageUsers() {
@@ -61,11 +63,16 @@ export function ManageUsers() {
     // [filteredTableRows, tableBodyRows]
   );
   async function performUsersCallout() {
-    setIsIntegrationExceptionState(false)
+    console.log("aaaa");
+    
+    setFilterValue("");
+        console.log("bbbb");
+
+    setIsIntegrationExceptionState(false);
     setRenderTable(false);
-    setTableBodyRows([])
-    setFilteredTableRows([])
-    setIsIntegrationLoading(true)
+    setTableBodyRows([]);
+    setFilteredTableRows([]);
+    setIsIntegrationLoading(true);
     const url = `${process.env.EXPO_PUBLIC_API_URL}/users`;
 
     const options = {
@@ -108,18 +115,25 @@ export function ManageUsers() {
     return (
       <>
         {tableData.map((item: any, index: any) => (
-          <TableRow key={item.userName}>
+          <TableRow key={item.userName+index}>
             {/* <TableData className='w-[150px]'>{item.id}</TableData> */}
-            <TableData className="text-center p-2">{item.userName}</TableData>
+            <TableData className={Platform.OS !== "web"?" p-2 w-[160px]":" p-2"}>{item.userName}</TableData>
             {/* <TableData className='w-[150px]'>{item.password}</TableData> */}
-            <TableData className="text-center p-2">{item.role}</TableData>
-            <TableData className="text-center p-2">
-              <ModalComponent content={item} buttonName="Details" variant="admin" />
+            <TableData className={Platform.OS !== "web"?" p-2 w-[120px]":" p-2"}>{item.role}</TableData>
+            <TableData className={Platform.OS !== "web"?" p-2 w-[100px]":" p-2"}>
+              <ModalComponent content={item} buttonName="Informações pessoais" variant="admin" onCloseCallback={() => {console.log("Modal closed for user:", item.userName);performUsersCallout();}}>
+                  {(openAlert) => (
+                      <Button className="w-full" variant="solid" onPress={openAlert}>
+                          <ButtonIcon as={EditIcon} size="xl"></ButtonIcon>
+                      </Button>
+
+                  )}
+              </ModalComponent>
             </TableData>
-            <TableData className="text-center p-2">
-              <AlertComponent content={item}>
+            <TableData className={Platform.OS !== "web"?" p-2 w-[75px]":" p-2"}>
+              <AlertComponent content={item} onCloseCallback={()=> {performUsersCallout()}}>
                 {(openAlert) => (
-                  <Button className="w-full" variant="solid" action="negative" onPress={openAlert}>
+                  <Button className="w-full" variant="solid" action="negative" onPress={openAlert} >
                     <ButtonIcon as={TrashIcon} size="xl" />
                   </Button>
                 )}
@@ -137,24 +151,25 @@ export function ManageUsers() {
     );
   }
   return (
+    <>
     <Card size="sm" variant="outline">
       <VStack space="2xl">
         <Center>
-          <Heading>Users management</Heading>
+          <Heading>Gerenciamento de usuários</Heading>
         </Center>
         <HStack className="w-full">
           <Input className="flex-1">
             <InputSlot className="pl-3">
               <InputIcon as={SearchIcon} />
             </InputSlot>
-            <InputField placeholder="Search user by username" onChangeText={setFilterValue}/>
+            <InputField placeholder="busca por nome de usuário" value={filterValue} onChangeText={setFilterValue}/>
           </Input>
           <Button onPress={performUsersCallout}>
             {isIntegrationLoading ? <ButtonSpinner color="white" /> : <ButtonIcon as={RepeatIcon}></ButtonIcon>}
           </Button>
         </HStack>
         {!renderTable && <Spinner size="large" color="grey" />}
-        <ScrollView>
+        <ScrollView className="max-h-[60vh]">
           <Table className="w-full">
             <TableHeader>
               {/* <TableRow className="w-full">
@@ -163,13 +178,44 @@ export function ManageUsers() {
             </TableHeader>
               {filterValue && <TableBody className="w-full">{renderTable && defineTableBody(filteredTableRows)}</TableBody>}
               {!filterValue && <TableBody className="w-full">{renderTable && defineTableBody(tableBodyRows)}</TableBody>}
-              { isIntegrationExceptionState && <Alert variant="solid" action="error">
-                <AlertIcon as={CircleAlert}></AlertIcon>
-                An unexpected error occurred. Refresh the page.
-              </Alert>}
           </Table>
         </ScrollView>
+        { isIntegrationExceptionState &&
+          <Alert variant="solid" action="error" className="w-full">
+            <AlertIcon as={CircleAlert}></AlertIcon>
+              <Text>An unexpected error occurred. Refresh the page.</Text>
+          </Alert>
+        }
       </VStack>
     </Card>
+
+    <Card>
+      <Center>
+        <Heading size="2xl">Ir para:</Heading>
+      <HStack space="md" className="flex-row flex flex-wrap">
+        <Button size="md" onPress={() => {router.push("/explorer")}}>
+        <ButtonText>
+          Página inicial
+        </ButtonText>
+      </Button>
+      <Button size="md" onPress={() => {router.push("/explorer")}}>
+        <ButtonText>
+          Hotéis
+        </ButtonText>
+      </Button>
+      <Button size="md" onPress={() => {router.push("/explorer")}}>
+        <ButtonText>
+          Reservas
+        </ButtonText>
+      </Button>
+      <Button size="md" onPress={() => {router.push("/explorer")}}>
+        <ButtonText>
+          Reviews
+        </ButtonText>
+      </Button>
+      </HStack>
+      </Center>
+    </Card>
+    </>
   );
 }
