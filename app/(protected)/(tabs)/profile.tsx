@@ -150,7 +150,7 @@ export default function ProfileScreen() {
                             <ButtonIcon as={IconProvider.ChevronRight} className='ml-auto' color='#9e9e9eff' size="lg" />
                         </Button>
                         <Divider className="w-full"></Divider>
-                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white">
+                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white" onPress={() => router.replace('/my-reviews')}>
                             <ButtonIcon as={IconProvider.Star} color='#9e9e9eff' size="md" />
                             <ButtonText className='px-1 font-light text-gray-800'>Minhas Reviews</ButtonText>
                             <View className="flex-1" />

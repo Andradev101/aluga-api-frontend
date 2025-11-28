@@ -6,6 +6,7 @@ import { Heading } from '@/components/ui/heading';
 import { Text } from '@/components/ui/text';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
+import { router } from 'expo-router';
 import React, { useEffect } from 'react';
 import { ScrollView } from 'react-native';
 
@@ -70,7 +71,7 @@ export default function Self() {
                 <Button variant="solid" size="md" action="primary">
                   <ButtonText>Reservas</ButtonText>
                 </Button>
-                <Button variant="solid" size="md" action="primary">
+                <Button variant="solid" size="md" action="primary" onPress={() => router.push('/my-reviews')}>
                   <ButtonText>Reviews</ButtonText>
                 </Button>
               </VStack>
