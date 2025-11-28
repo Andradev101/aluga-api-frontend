@@ -56,6 +56,9 @@ export default function MyReviewsScreen() {
       setEditComment('');
       setEditHotel('');
       
+      // Remove o parâmetro edit da URL
+      router.replace('/my-reviews');
+      
       await loadMyReviews();
     } catch (error: any) {
       console.error('Erro ao deletar review:', error);
@@ -147,6 +150,8 @@ export default function MyReviewsScreen() {
     }
   }, [hotels]);
 
+
+
   // Abre automaticamente o formulário se vier com parâmetro edit
   React.useEffect(() => {
     if (params.edit && reviews.length > 0) {
@@ -160,10 +165,15 @@ export default function MyReviewsScreen() {
   // Recarrega dados sempre que voltar para a tela
   useFocusEffect(
     React.useCallback(() => {
+      // Só fecha os formulários se não houver parâmetro edit
+      if (!params.edit) {
+        setEditingReview(null);
+        setShowCreateForm(false);
+      }
       if (hotels.length > 0 && !loading) {
         loadMyReviews();
       }
-    }, [])
+    }, [params.edit])
   );
 
   const handleEditReview = (review: Review) => {
@@ -217,19 +227,31 @@ export default function MyReviewsScreen() {
         });
       }
       
+      // Fecha o formulário após atualizar
       setEditingReview(null);
       setEditRating(5);
       setEditComment('');
       setEditHotel('');
+      
+      // Remove o parâmetro edit da URL
+      router.replace('/my-reviews');
+      
       await loadMyReviews();
     } catch (error: any) {
       console.error('Erro ao atualizar review:', error);
       if (error.message.includes('authentication') || error.message.includes('401')) {
         router.push('/login');
       } else {
-        // Recarrega dados para sincronizar
-        await loadMyReviews();
+        // Recarrega dados para sincronizar e fecha o formulário
         setEditingReview(null);
+        setEditRating(5);
+        setEditComment('');
+        setEditHotel('');
+        
+        // Remove o parâmetro edit da URL
+        router.replace('/my-reviews');
+        
+        await loadMyReviews();
       }
     }
     setLoading(false);
@@ -240,6 +262,9 @@ export default function MyReviewsScreen() {
     setEditRating(5);
     setEditComment('');
     setEditHotel('');
+    
+    // Remove o parâmetro edit da URL
+    router.replace('/my-reviews');
   };
 
   const handleCreateReview = async () => {
@@ -281,26 +306,35 @@ export default function MyReviewsScreen() {
           {!loading &&
             <Card size="lg" variant="outline" className="m-1">
               <Heading size="4xl" className="mb-1 p-2">
-                My Reviews
+                Minhas Avaliações
               </Heading>
               <Divider />
-              <Text size="lg" className="p-2">You have {reviews.length} reviews:</Text>
+
               
               <VStack className="gap-2">
-                <Button variant="solid" size="md" action="primary" onPress={() => setShowCreateForm(!showCreateForm)}>
-                  <ButtonText>{showCreateForm ? 'Cancel' : 'Create New Review'}</ButtonText>
-                </Button>
+                {!showCreateForm && (
+                  <Button 
+                    variant="solid" 
+                    size="md" 
+                    onPress={() => setShowCreateForm(true)} 
+                    style={{ backgroundColor: '#FF7F00' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#FF7F00'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#FF7F00'}
+                  >
+                    <ButtonText>Avaliar Hotel</ButtonText>
+                  </Button>
+                )}
                 
                 {showCreateForm && (
                   <Card size="md" variant="outline" className="m-1">
                     <VStack className="gap-2">
-                      <Text size="md">New Review</Text>
+                      <Text size="md">Nova Avaliação</Text>
                       
                       <Select selectedValue={selectedHotel} onValueChange={setSelectedHotel}>
                         <SelectTrigger>
                           <SelectInput 
-                            placeholder="Select hotel..." 
-                            value={hotels.find(h => h.id.toString() === selectedHotel)?.name || 'Select hotel...'}
+                            placeholder="Selecionar hotel..." 
+                            value={hotels.find(h => h.id.toString() === selectedHotel)?.name || 'Selecionar hotel...'}
                           />
                           <SelectIcon as={ChevronDownIcon} />
                         </SelectTrigger>
@@ -327,7 +361,7 @@ export default function MyReviewsScreen() {
                       
                       <Textarea>
                         <TextareaInput 
-                          placeholder="Write your review..."
+                          placeholder="Escreva sua avaliação..."
                           value={comment}
                           onChangeText={setComment}
                         />
@@ -337,11 +371,11 @@ export default function MyReviewsScreen() {
                         <Button 
                           variant="solid" 
                           size="sm" 
-                          action="primary" 
                           onPress={handleCreateReview}
                           disabled={!comment.trim() || !selectedHotel}
+                          style={{ backgroundColor: '#FF7F00' }}
                         >
-                          <ButtonText>Submit</ButtonText>
+                          <ButtonText style={{ color: 'white' }}>Criar Avaliação</ButtonText>
                         </Button>
                         <Button variant="outline" size="sm" onPress={cancelCreate}>
                           <ButtonText>Cancel</ButtonText>
@@ -352,73 +386,7 @@ export default function MyReviewsScreen() {
                 )}
                 
                 
-                {editingReview && (
-                  <Card size="md" variant="outline" className="m-1">
-                    <VStack className="gap-2">
-                      <Text size="md">Edit Review</Text>
-                      
-                      <Select selectedValue={editHotel} onValueChange={setEditHotel}>
-                        <SelectTrigger>
-                          <SelectInput 
-                            placeholder="Select hotel..." 
-                            value={hotels.find(h => h.id.toString() === editHotel)?.name || 'Select hotel...'}
-                          />
-                          <SelectIcon as={ChevronDownIcon} />
-                        </SelectTrigger>
-                        <SelectPortal>
-                          <SelectBackdrop />
-                          <SelectContent>
-                            <SelectDragIndicatorWrapper>
-                              <SelectDragIndicator />
-                            </SelectDragIndicatorWrapper>
-                            {hotels.map((hotel) => (
-                              <SelectItem key={hotel.id} label={hotel.name} value={hotel.id.toString()} />
-                            ))}
-                          </SelectContent>
-                        </SelectPortal>
-                      </Select>
-                      
-                      <StarRating 
-                        rating={editRating}
-                        size={24}
-                        interactive={true}
-                        onRatingChange={setEditRating}
-                        showNumber={true}
-                      />
-                      
-                      <Textarea>
-                        <TextareaInput 
-                          placeholder="Edit your review..."
-                          value={editComment}
-                          onChangeText={setEditComment}
-                        />
-                      </Textarea>
-                      
-                      <VStack className="gap-1">
-                        <Button 
-                          variant="solid" 
-                          size="sm" 
-                          action="primary" 
-                          onPress={() => handleUpdateReview(editingReview)}
-                          disabled={!editComment.trim() || !editHotel}
-                        >
-                          <ButtonText>Update</ButtonText>
-                        </Button>
-                        <Button 
-                          variant="solid" 
-                          size="sm" 
-                          action="negative" 
-                          onPress={() => handleDeleteReview(editingReview)}
-                        >
-                          <ButtonText>Delete</ButtonText>
-                        </Button>
-                        <Button variant="outline" size="sm" onPress={cancelEdit}>
-                          <ButtonText>Cancel</ButtonText>
-                        </Button>
-                      </VStack>
-                    </VStack>
-                  </Card>
-                )}
+
                 
                 {reviews.length === 0 ? (
                   <Text className="p-2 text-center">No reviews yet. Create your first review!</Text>
@@ -426,22 +394,91 @@ export default function MyReviewsScreen() {
                   reviews.filter(review => review && review.id).map((review: Review) => {
                     const hotel = hotels.find(h => h.id === review.hotel_id);
                     const hotelName = hotel?.name || `Hotel ID ${review.hotel_id}`;
+                    const isEditing = editingReview === review.id;
                     
                     return (
                       <Card key={review.id} size="md" variant="outline" className="m-1">
                         <VStack className="gap-2">
-                          <Text size="md">Hotel: {hotelName}</Text>
-                          <Text size="sm">Rating: {review.rating || 0}/5 ⭐</Text>
-                          <Text size="sm">{review.comment || 'No comment'}</Text>
-                          
-                          <VStack className="gap-1">
-                            <Button variant="outline" size="sm" action="primary" onPress={() => handleEditReview(review)}>
-                              <ButtonText>Edit</ButtonText>
-                            </Button>
-                            <Button variant="solid" size="sm" action="negative" onPress={() => handleDeleteReview(review.id)}>
-                              <ButtonText>Delete</ButtonText>
-                            </Button>
-                          </VStack>
+                          {isEditing ? (
+                            <>
+                              <Text size="md">Edit Review</Text>
+                              
+                              <Select selectedValue={editHotel} onValueChange={setEditHotel}>
+                                <SelectTrigger>
+                                  <SelectInput 
+                                    placeholder="Select hotel..." 
+                                    value={hotels.find(h => h.id.toString() === editHotel)?.name || 'Select hotel...'}
+                                  />
+                                  <SelectIcon as={ChevronDownIcon} />
+                                </SelectTrigger>
+                                <SelectPortal>
+                                  <SelectBackdrop />
+                                  <SelectContent>
+                                    <SelectDragIndicatorWrapper>
+                                      <SelectDragIndicator />
+                                    </SelectDragIndicatorWrapper>
+                                    {hotels.map((hotel) => (
+                                      <SelectItem key={hotel.id} label={hotel.name} value={hotel.id.toString()} />
+                                    ))}
+                                  </SelectContent>
+                                </SelectPortal>
+                              </Select>
+                              
+                              <StarRating 
+                                rating={editRating}
+                                size={24}
+                                interactive={true}
+                                onRatingChange={setEditRating}
+                                showNumber={true}
+                              />
+                              
+                              <Textarea>
+                                <TextareaInput 
+                                  placeholder="Edit your review..."
+                                  value={editComment}
+                                  onChangeText={setEditComment}
+                                />
+                              </Textarea>
+                              
+                              <VStack className="gap-1">
+                                <Button 
+                                  variant="solid" 
+                                  size="sm" 
+                                  action="primary" 
+                                  onPress={() => handleUpdateReview(editingReview)}
+                                  disabled={!editComment.trim() || !editHotel}
+                                >
+                                  <ButtonText>Update</ButtonText>
+                                </Button>
+                                <Button 
+                                  variant="solid" 
+                                  size="sm" 
+                                  action="negative" 
+                                  onPress={() => handleDeleteReview(editingReview)}
+                                >
+                                  <ButtonText>Delete</ButtonText>
+                                </Button>
+                                <Button variant="outline" size="sm" onPress={cancelEdit}>
+                                  <ButtonText>Cancel</ButtonText>
+                                </Button>
+                              </VStack>
+                            </>
+                          ) : (
+                            <>
+                              <Text size="md">{hotelName}</Text>
+                              <Text size="sm">{review.rating || 0}/5 ⭐</Text>
+                              <Text size="sm">{review.comment || 'No comment'}</Text>
+                              
+                              <VStack className="gap-1">
+                                <Button variant="solid" size="sm" onPress={() => handleEditReview(review)} style={{ backgroundColor: '#1E3A8A' }}>
+                                  <ButtonText style={{ color: 'white' }}>Edit</ButtonText>
+                                </Button>
+                                <Button variant="solid" size="sm" action="negative" onPress={() => handleDeleteReview(review.id)}>
+                                  <ButtonText>Delete</ButtonText>
+                                </Button>
+                              </VStack>
+                            </>
+                          )}
                         </VStack>
                       </Card>
                     );

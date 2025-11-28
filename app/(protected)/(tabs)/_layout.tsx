@@ -78,6 +78,16 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <User size={25} color={color} />,
         }}
       />
+
+      {/* My Reviews - oculta da tab bar */}
+      <Tabs.Screen
+        name="my-reviews"
+        options={{
+          href: null,
+        }}
+      />
+
+
     </Tabs>
   );
 }

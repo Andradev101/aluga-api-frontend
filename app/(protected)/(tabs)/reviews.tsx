@@ -1,8 +1,6 @@
 import StarRating from '@/components/star-rating';
 import { Button, ButtonSpinner, ButtonText } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Divider } from '@/components/ui/divider';
-import { Heading } from '@/components/ui/heading';
 import { ChevronDownIcon } from '@/components/ui/icon';
 
 import { Select, SelectBackdrop, SelectContent, SelectDragIndicator, SelectDragIndicatorWrapper, SelectIcon, SelectInput, SelectItem, SelectPortal, SelectTrigger } from '@/components/ui/select';
@@ -10,11 +8,10 @@ import { Text } from '@/components/ui/text';
 import { Textarea, TextareaInput } from '@/components/ui/textarea';
 import { VStack } from '@/components/ui/vstack';
 import { getAllHotels, Hotel } from '@/services/hotels-api';
-import { createReview, deleteReview, updateReview } from '@/services/reviews-api';
+import { createReview, deleteReview } from '@/services/reviews-api';
 import { Review } from '@/types/reviews';
-import { useAuth } from '@/hooks/useAuth';
-import React, { useState, useRef } from 'react';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
+import React, { useRef, useState } from 'react';
 import { ScrollView } from 'react-native';
 
 
@@ -51,11 +48,6 @@ export default function ReviewsScreen() {
         router.push('/my-reviews');
         return;
       }
-      setComment('');
-      setSelectedHotel('');
-      setRating(5);
-      setShowForm(false);
-      await loadAllReviews();
     } catch (error: any) {
       console.error('Erro ao criar/atualizar review:', error);
     }
@@ -204,6 +196,7 @@ export default function ReviewsScreen() {
   // Recarrega dados sempre que voltar para a tela
   useFocusEffect(
     React.useCallback(() => {
+      setShowForm(false);
       loadAllReviews();
     }, [])
   );
@@ -222,21 +215,21 @@ export default function ReviewsScreen() {
       <Card size="md" variant="outline" className="m-1">
         <VStack className="gap-2">
           <Text size="md">@{review.user?.user_name || 'User'}</Text>
-          <Text size="sm">Hotel: {hotelName}</Text>
-          <Text size="sm">Rating: {review.rating || 0}/5 ⭐</Text>
+          <Text size="sm">{hotelName}</Text>
+          <Text size="sm">{review.rating || 0}/5 ⭐</Text>
           <Text size="sm">{review.comment || 'No comment'}</Text>
           
           {canEdit && (
             <VStack className="gap-1">
-              <Button variant="outline" size="sm" action="primary" onPress={() => handleEditReview(review)}>
-                <ButtonText>Edit</ButtonText>
+              <Button variant="solid" size="sm" onPress={() => handleEditReview(review)} style={{ backgroundColor: '#1E3A8A' }}>
+                <ButtonText style={{ color: 'white' }}>Edit</ButtonText>
               </Button>
             </VStack>
           )}
           
           {canDelete && (
             <VStack className="gap-1">
-              <Button variant="outline" size="sm" action="negative" onPress={() => handleDeleteReview(review.id)}>
+              <Button variant="solid" size="sm" action="negative" onPress={() => handleDeleteReview(review.id)}>
                 <ButtonText>Delete</ButtonText>
               </Button>
             </VStack>
@@ -253,28 +246,33 @@ export default function ReviewsScreen() {
         <VStack className="p-2 gap-2">
           {!loading &&
             <Card size="lg" variant="outline" className="m-1">
-              <Heading size="4xl" className="mb-1 p-2">
-                Hotel Reviews
-              </Heading>
-              <Divider />
+
+
               
               <VStack className="gap-2">
-                {isLoggedIn && (
-                  <Button variant="solid" size="md" action="primary" onPress={() => setShowForm(!showForm)}>
-                    <ButtonText>{showForm ? 'Cancel' : 'Create Review'}</ButtonText>
+                {!showForm && (
+                  <Button 
+                    variant="solid" 
+                    size="md" 
+                    onPress={() => setShowForm(true)} 
+                    style={{ backgroundColor: '#FF7F00' }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#FF7F00'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#FF7F00'}
+                  >
+                    <ButtonText>Avaliar Hotel</ButtonText>
                   </Button>
                 )}
                 
                 {showForm && (
                   <Card size="md" variant="outline" className="m-1">
                     <VStack className="gap-2">
-                      <Text size="md">New Review</Text>
+                      <Text size="md">Nova Avaliação</Text>
                       
                       <Select selectedValue={selectedHotel} onValueChange={setSelectedHotel}>
                         <SelectTrigger>
                           <SelectInput 
-                            placeholder="Select hotel..." 
-                            value={hotels.find(h => h.id.toString() === selectedHotel)?.name || 'Select hotel...'}
+                            placeholder="Selecionar hotel..." 
+                            value={hotels.find(h => h.id.toString() === selectedHotel)?.name || 'Selecionar hotel...'}
                           />
                           <SelectIcon as={ChevronDownIcon} />
                         </SelectTrigger>
@@ -301,7 +299,7 @@ export default function ReviewsScreen() {
                       
                       <Textarea>
                         <TextareaInput 
-                          placeholder="Write your review..."
+                          placeholder="Escreva sua avaliação..."
                           value={comment}
                           onChangeText={setComment}
                         />
@@ -311,11 +309,11 @@ export default function ReviewsScreen() {
                         <Button 
                           variant="solid" 
                           size="sm" 
-                          action="primary" 
                           onPress={handleCreateReview}
                           disabled={!comment.trim() || !selectedHotel}
+                          style={{ backgroundColor: '#FF7F00' }}
                         >
-                          <ButtonText>Submit</ButtonText>
+                          <ButtonText style={{ color: 'white' }}>Criar Avaliação</ButtonText>
                         </Button>
                         <Button variant="outline" size="sm" onPress={cancelEdit}>
                           <ButtonText>Cancel</ButtonText>
@@ -327,10 +325,13 @@ export default function ReviewsScreen() {
                 
                 <Card size="md" variant="outline" className="m-1">
                   <VStack className="gap-2">
-                    <Text size="md">Filter Reviews</Text>
+                    <Text size="md">Filtrar Por</Text>
                     <Select selectedValue={filterHotel} onValueChange={handleFilterChange}>
                       <SelectTrigger>
-                        <SelectInput placeholder="All hotels" />
+                        <SelectInput 
+                          placeholder="Todos os Hotéis" 
+                          value={filterHotel === 'all' ? 'Todos os Hotéis' : filterHotel === 'my-reviews' ? 'Minhas avaliações' : hotels.find(h => h.id.toString() === filterHotel)?.name || 'Todos os Hotéis'}
+                        />
                         <SelectIcon as={ChevronDownIcon} />
                       </SelectTrigger>
                       <SelectPortal>
@@ -339,8 +340,8 @@ export default function ReviewsScreen() {
                           <SelectDragIndicatorWrapper>
                             <SelectDragIndicator />
                           </SelectDragIndicatorWrapper>
-                          <SelectItem label="All reviews" value="all" />
-                          {currentUser && <SelectItem label="My reviews" value="my-reviews" />}
+                          <SelectItem label="Todos os Hotéis" value="all" />
+                          {currentUser && <SelectItem label="Minhas avaliações" value="my-reviews" />}
                           {hotels.map((hotel) => (
                             <SelectItem key={hotel.id} label={hotel.name} value={hotel.id.toString()} />
                           ))}
@@ -350,7 +351,7 @@ export default function ReviewsScreen() {
                   </VStack>
                 </Card>
                 
-                <Text size="lg" className="p-2">Reviews ({reviews.length}):</Text>
+
                 
                 {reviews.length === 0 ? (
                   <Text className="p-2 text-center">No reviews found</Text>
