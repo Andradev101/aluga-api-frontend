@@ -1,8 +1,17 @@
+// app/reservationDetails.tsx
+import { Badge, BadgeText } from '@/components/ui/badge';
+import { Button, ButtonText } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Divider } from '@/components/ui/divider';
+import { Heading } from '@/components/ui/heading';
+import { HStack } from '@/components/ui/hstack';
+import { Text } from '@/components/ui/text';
+import { VStack } from '@/components/ui/vstack';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView } from 'react-native';
 
-// ✅ FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
+// FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
 const localISOStringToDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day, 12, 0, 0);
@@ -35,75 +44,163 @@ export default function ReservationDetails() {
     });
   };
 
+  const calcularNoites = (checkin: string | undefined, checkout: string | undefined) => {
+    if (!checkin || !checkout) return 0;
+    const inicio = localISOStringToDate(checkin);
+    const fim = localISOStringToDate(checkout);
+    const diff = fim.getTime() - inicio.getTime();
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
+  };
+
+  const noites = calcularNoites(date_checkin as string, date_checkout as string);
+  const pricePerNight = parseFloat(roomPrice as string) || 0;
+  const roomsCount = parseInt(rooms_booked as string) || 1;
+  const totalPrice = pricePerNight * noites * roomsCount;
+
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#1E3A8A" />
-        </TouchableOpacity>
-        <Text style={styles.title}>Detalhes da Reserva</Text>
-      </View>
+    <ScrollView className="flex-1 bg-gray-50">
+      <VStack className="p-2 gap-2">
+        {/* Header com botão voltar */}
+        <HStack className="items-center p-2 gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onPress={() => router.back()}
+            className="w-10 h-10 p-0"
+          >
+            <Ionicons name="arrow-back" size={20} color="#1E3A8A" />
+          </Button>
+          <Heading size="3xl" className="flex-1">
+            Detalhes da Reserva
+          </Heading>
+        </HStack>
 
-      <View style={styles.card}>
-        <View style={styles.section}>
-          <Text style={styles.label}>ID da Reserva</Text>
-          <Text style={styles.value}>{reservaId}</Text>
-        </View>
+        {/* Card principal */}
+        <Card size="lg" variant="outline" className="m-1">
+          {/* ID da Reserva e Status */}
+          <HStack className="justify-between items-center p-4">
+            <VStack>
+              <Text className="text-gray-500 text-sm mb-1">ID da Reserva</Text>
+              <Text className="text-gray-900 font-bold text-lg">#{reservaId}</Text>
+            </VStack>
+            <Badge size="lg" variant="solid" action="success">
+              <BadgeText>Confirmada</BadgeText>
+            </Badge>
+          </HStack>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Hotel</Text>
-          <Text style={styles.value}>{hotelName} ({hotelCity})</Text>
-          <Text style={styles.subValue}>⭐ {hotelStars} estrelas</Text>
-        </View>
+          <Divider />
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Quarto</Text>
-          <Text style={styles.value}>{roomName}</Text>
-          <Text style={styles.subValue}>{roomType} - R$ {roomPrice}/noite</Text>
-        </View>
+          {/* Informações do Hotel */}
+          <VStack className="p-4 gap-2">
+            <Text className="text-gray-500 text-sm">Hotel</Text>
+            <Text className="text-gray-900 font-bold text-xl">
+              🏨 {hotelName}
+            </Text>
+            <Text className="text-gray-700 text-base">
+              📍 {hotelCity}
+            </Text>
+            <Text className="text-gray-700 text-base">
+              ⭐ {hotelStars} estrelas
+            </Text>
+          </VStack>
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Período</Text>
-          <Text style={styles.value}>Check-in: {formatarData(date_checkin as string)}</Text>
-          <Text style={styles.value}>Check-out: {formatarData(date_checkout as string)}</Text>
-        </View>
+          <Divider />
 
-        <View style={styles.section}>
-          <Text style={styles.label}>Quartos reservados</Text>
-          <Text style={styles.value}>{rooms_booked}</Text>
-        </View>
+          {/* Informações do Quarto */}
+          <VStack className="p-4 gap-2">
+            <Text className="text-gray-500 text-sm">Quarto</Text>
+            <Text className="text-gray-900 font-bold text-lg">
+              🛏️ {roomName}
+            </Text>
+            <Text className="text-gray-700 text-base">
+              {roomType}
+            </Text>
+            <Text className="text-gray-700 text-base">
+              💵 R$ {pricePerNight.toFixed(2).replace('.', ',')} por noite
+            </Text>
+          </VStack>
 
-        <View style={styles.statusContainer}>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>Confirmada</Text>
-          </View>
-        </View>
-      </View>
+          <Divider />
 
-      <View style={styles.actions}>
-        <TouchableOpacity style={styles.button} onPress={() => router.push('/myReservations')}>
-          <Text style={styles.buttonText}>Voltar às Reservas</Text>
-        </TouchableOpacity>
-      </View>
+          {/* Período da Reserva */}
+          <VStack className="p-4 gap-2">
+            <Text className="text-gray-500 text-sm">Período</Text>
+            <HStack className="items-center gap-2">
+              <Ionicons name="calendar-outline" size={20} color="#4B5563" />
+              <VStack className="flex-1">
+                <Text className="text-gray-900 font-semibold">
+                  Check-in
+                </Text>
+                <Text className="text-gray-700">
+                  {formatarData(date_checkin as string)}
+                </Text>
+              </VStack>
+            </HStack>
+            <HStack className="items-center gap-2">
+              <Ionicons name="calendar-outline" size={20} color="#4B5563" />
+              <VStack className="flex-1">
+                <Text className="text-gray-900 font-semibold">
+                  Check-out
+                </Text>
+                <Text className="text-gray-700">
+                  {formatarData(date_checkout as string)}
+                </Text>
+              </VStack>
+            </HStack>
+            <Text className="text-gray-600 text-sm mt-1">
+              {noites} {noites === 1 ? 'noite' : 'noites'}
+            </Text>
+          </VStack>
+
+          <Divider />
+
+          {/* Quantidade de Quartos */}
+          <VStack className="p-4 gap-2">
+            <Text className="text-gray-500 text-sm">Quartos Reservados</Text>
+            <HStack className="items-center gap-2">
+              <Ionicons name="key-outline" size={24} color="#4B5563" />
+              <Text className="text-gray-900 font-bold text-lg">
+                {rooms_booked} {roomsCount === 1 ? 'quarto' : 'quartos'}
+              </Text>
+            </HStack>
+          </VStack>
+
+          <Divider />
+
+          {/* Total */}
+          <VStack className="p-4 gap-2 bg-blue-50 rounded-b-lg">
+            <Text className="text-gray-500 text-sm">Valor Total</Text>
+            <Text className="text-blue-700 font-bold text-2xl">
+              💰 R$ {totalPrice.toFixed(2).replace('.', ',')}
+            </Text>
+            <Text className="text-gray-600 text-xs">
+              {roomsCount} {roomsCount === 1 ? 'quarto' : 'quartos'} × {noites} {noites === 1 ? 'noite' : 'noites'}
+            </Text>
+          </VStack>
+        </Card>
+
+        {/* Botões de ação */}
+        <VStack className="gap-2 p-2">
+          <Button
+            variant="solid"
+            size="lg"
+            action="primary"
+            onPress={() => router.push('/myReservations')}
+            className="w-full"
+          >
+            <ButtonText>Voltar às Minhas Reservas</ButtonText>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="lg"
+            onPress={() => router.push('/explorer')}
+            className="w-full"
+          >
+            <ButtonText>Ir para o Início</ButtonText>
+          </Button>
+        </VStack>
+      </VStack>
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  content: { padding: 20 },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  backButton: { marginRight: 16 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#1E3A8A' },
-  card: { backgroundColor: '#fff', padding: 20, borderRadius: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 4 },
-  section: { marginBottom: 16 },
-  label: { fontSize: 14, color: '#6B7280', marginBottom: 4 },
-  value: { fontSize: 16, color: '#1F2937', fontWeight: '600' },
-  subValue: { fontSize: 14, color: '#6B7280', marginTop: 2 },
-  statusContainer: { alignItems: 'center', marginTop: 10 },
-  statusBadge: { backgroundColor: '#DCFCE7', paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20 },
-  statusText: { color: '#166534', fontWeight: '600', fontSize: 14 },
-  actions: { marginTop: 30 },
-  button: { backgroundColor: '#1E3A8A', padding: 16, borderRadius: 8, alignItems: 'center' },
-  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
-});

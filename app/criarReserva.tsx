@@ -11,7 +11,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
 // Importação condicional do DateTimePicker (só para mobile)
@@ -20,7 +20,7 @@ if (Platform.OS !== 'web') {
   DateTimePicker = require('@react-native-community/datetimepicker').default;
 }
 
-// ✅ FUNÇÃO AUXILIAR: Converte Date para string no formato YYYY-MM-DD sem problemas de timezone
+// FUNÇÃO AUXILIAR: Converte Date para string no formato YYYY-MM-DD sem problemas de timezone
 const dateToLocalISOString = (date: Date): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -28,13 +28,13 @@ const dateToLocalISOString = (date: Date): string => {
   return `${year}-${month}-${day}`;
 };
 
-// ✅ FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
+// FUNÇÃO AUXILIAR: Converte string YYYY-MM-DD para Date (meio-dia local para evitar problemas de timezone)
 const localISOStringToDate = (dateString: string): Date => {
   const [year, month, day] = dateString.split('-').map(Number);
   return new Date(year, month - 1, day, 12, 0, 0);
 };
 
-// ✅ Radio Button
+// Radio Button
 interface RadioButtonProps {
   label: string;
   selected: boolean;
@@ -50,7 +50,7 @@ const RadioButton: React.FC<RadioButtonProps> = ({ label, selected, onSelect }) 
   </TouchableOpacity>
 );
 
-// ✅ Tipo do usuário
+// Tipo do usuário
 interface User {
   id: string;
   userName: string;
@@ -63,7 +63,7 @@ interface User {
   address?: string;
 }
 
-// ✅ Interface para Quarto
+// Interface para Quarto
 interface Room {
   id: number;
   name: string;
@@ -74,7 +74,7 @@ interface Room {
   amenities: string[];
 }
 
-// ✅ Interface para Hotel Completo
+// Interface para Hotel Completo
 interface HotelDetails {
   id: number;
   name: string;
@@ -105,25 +105,25 @@ export default function TelaReserva() {
   const [loading, setLoading] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
-  // 🔹 Estados para quartos
+  // Estados para quartos
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
 
-  // 🔹 Estados para datas e cálculo
+  // Estados para datas e cálculo
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [numNoites, setNumNoites] = useState(0);
   const [valorTotal, setValorTotal] = useState(0);
-  
+
   // Estados para controlar exibição dos pickers
   const [showCheckInPicker, setShowCheckInPicker] = useState(false);
   const [showCheckOutPicker, setShowCheckOutPicker] = useState(false);
 
   const API_BASE = process.env.EXPO_PUBLIC_API_URL;
 
-  // ✅ Função para carregar dados do usuário logado
-  const loadUserData = async () => {
+  // Funções de API e Efeitos
+  const loadUserData = async () => { 
     try {
       setIsLoadingUser(true);
 
@@ -150,7 +150,6 @@ export default function TelaReserva() {
     }
   };
 
-  // ✅ Função para carregar dados do hotel e seus quartos
   const loadHotelAndRooms = async () => {
     try {
       setLoadingRooms(true);
@@ -169,7 +168,7 @@ export default function TelaReserva() {
 
       const hotelData: HotelDetails = await res.json();
       setRooms(hotelData.rooms || []);
-      
+
       // Seleciona automaticamente o primeiro quarto se houver apenas um
       if (hotelData.rooms && hotelData.rooms.length === 1) {
         setSelectedRoom(hotelData.rooms[0]);
@@ -187,16 +186,16 @@ export default function TelaReserva() {
     loadHotelAndRooms();
   }, []);
 
-  // 🔹 Calcular número de noites e valor total
+  // Calcular número de noites e valor total
   useEffect(() => {
     if (checkIn && checkOut && selectedRoom) {
       const dataInicio = localISOStringToDate(checkIn);
       const dataFim = localISOStringToDate(checkOut);
-      
+
       if (dataFim > dataInicio) {
         const diffTime = Math.abs(dataFim.getTime() - dataInicio.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
+
         setNumNoites(diffDays);
         setValorTotal(diffDays * selectedRoom.base_price);
       } else {
@@ -209,29 +208,27 @@ export default function TelaReserva() {
     }
   }, [checkIn, checkOut, selectedRoom]);
 
-  // 🔹 Validar data mínima (hoje)
+  // Funções Auxiliares de Data
   const getDataMinima = () => {
     const hoje = new Date();
     return dateToLocalISOString(hoje);
   };
 
-  // 🔹 Validar check-out mínimo (1 dia após check-in)
   const getCheckOutMinimo = () => {
     if (!checkIn) return getDataMinima();
-    
+
     const dataCheckIn = localISOStringToDate(checkIn);
     dataCheckIn.setDate(dataCheckIn.getDate() + 1);
     return dateToLocalISOString(dataCheckIn);
   };
 
-  // 🔹 Formatar data para exibição
   const formatarData = (dataISO: string) => {
     if (!dataISO) return '';
     const data = localISOStringToDate(dataISO);
     return data.toLocaleDateString('pt-BR');
   };
 
-  // 🔹 Handlers para os date pickers
+  //  Handlers para os date pickers
   const handleCheckInChange = (event: any, selectedDate?: Date) => {
     setShowCheckInPicker(Platform.OS === 'ios');
     if (selectedDate) {
@@ -338,18 +335,21 @@ export default function TelaReserva() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.headerTitle}>Finalizar Reserva</Text>
+      {/* HEADER PRINCIPAL */}
+      <View style={[styles.card, styles.headerCard]}>
+        <Text style={styles.headerTitle}>Finalizar Reserva</Text>
+        <View style={styles.divider} />
+        <Text style={styles.hotelInfo}>
+          <Ionicons name="business-outline" size={16} color="#6B7280" /> {hotelName}
+        </Text>
+      </View>
 
-      {/* 0. Seleção de Quarto */}
+      {/* Seleção de Quarto */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>
           <Ionicons name="bed-outline" size={18} color="#1E3A8A" /> Escolha seu Quarto
         </Text>
-        
-        <Text style={styles.hotelInfo}>
-          <Ionicons name="business-outline" size={16} color="#6B7280" /> {hotelName}
-        </Text>
-
+        <View style={styles.divider} />
         {loadingRooms ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color="#1E3A8A" />
@@ -366,30 +366,26 @@ export default function TelaReserva() {
                 key={room.id}
                 style={[
                   styles.roomCard,
-                  selectedRoom?.id === room.id && styles.roomCardSelected
+                  selectedRoom?.id === room.id && styles.roomCardSelected,
                 ]}
                 onPress={() => setSelectedRoom(room)}
               >
                 <View style={styles.roomHeader}>
+                  {/* Radio/Seleção */}
                   <View style={styles.radioCircle}>
                     {selectedRoom?.id === room.id && <View style={styles.radioInnerCircle} />}
                   </View>
                   <View style={styles.roomInfo}>
                     <Text style={styles.roomName}>{room.name}</Text>
-                    <Text style={styles.roomType}>{room.room_type}</Text>
+                    <Text style={styles.roomType}>
+                      {room.room_type} | Até {room.capacity} {room.capacity === 1 ? 'pessoa' : 'pessoas'}
+                    </Text>
                   </View>
-                </View>
-                
-                <View style={styles.roomFooter}>
-                  <Text style={styles.roomOccupancy}>
-                    <Ionicons name="people-outline" size={14} color="#6B7280" /> 
-                    {' '}Até {room.capacity} {room.capacity === 1 ? 'pessoa' : 'pessoas'}
-                  </Text>
                   <Text style={styles.roomPrice}>
-                    R$ {room.base_price.toFixed(2).replace('.', ',')}/noite
+                    R$ {room.base_price.toFixed(2).replace('.', ',')}
+                    <Text style={{ fontSize: 12, fontWeight: '400' }}>/noite</Text>
                   </Text>
                 </View>
-                
                 {room.total_units > 0 && (
                   <Text style={styles.roomUnits}>
                     ✓ {room.total_units} {room.total_units === 1 ? 'unidade disponível' : 'unidades disponíveis'}
@@ -401,47 +397,79 @@ export default function TelaReserva() {
         )}
       </View>
 
-      {/* 1. Seleção de Datas e Resumo da Reserva */}
+      {/* Seleção de Datas e Resumo da Reserva */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>
           <Ionicons name="calendar-outline" size={18} color="#1E3A8A" /> Datas da Estadia
         </Text>
 
-        {/* Check-in */}
-        <View style={styles.dateInputContainer}>
-          <Text style={styles.dateLabel}>Check-in</Text>
-          {Platform.OS === 'web' ? (
-            <input
-              type="date"
-              value={checkIn}
-              onChange={(e: any) => setCheckIn(e.target.value)}
-              min={getDataMinima()}
-              style={{
-                height: 50,
-                borderColor: '#D1D5DB',
-                borderWidth: 1,
-                borderRadius: 8,
-                paddingLeft: 12,
-                paddingRight: 12,
-                fontSize: 15,
-                fontFamily: 'system-ui',
-                width: '100%',
-                backgroundColor: '#FFF',
-                cursor: 'pointer',
-              }}
-            />
-          ) : (
-            <TouchableOpacity onPress={() => setShowCheckInPicker(true)}>
-              <View style={styles.dateInput}>
-                <Text style={checkIn ? styles.dateText : styles.datePlaceholder}>
-                  {checkIn ? formatarData(checkIn) : 'Selecione a data de entrada'}
-                </Text>
-                <Ionicons name="calendar-outline" size={20} color="#1E3A8A" style={styles.calendarIcon} />
-              </View>
-            </TouchableOpacity>
-          )}
+        {/* Check-in e Check-out */}
+        <View style={styles.row}>
+          {/* Check-in */}
+          <View style={[styles.dateInputContainer, styles.halfInput]}>
+            <Text style={styles.dateLabel}>Check-in</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                value={checkIn}
+                onChange={(e: any) => setCheckIn(e.target.value)}
+                min={getDataMinima()}
+                style={styles.webDateInput as any}
+              />
+            ) : (
+              <TouchableOpacity onPress={() => setShowCheckInPicker(true)}>
+                <View style={styles.dateInput}>
+                  <Text style={checkIn ? styles.dateText : styles.datePlaceholder}>
+                    {checkIn ? formatarData(checkIn) : 'Entrada'}
+                  </Text>
+                  <Ionicons name="calendar-outline" size={20} color="#1E3A8A" style={styles.calendarIcon} />
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Check-out */}
+          <View style={[styles.dateInputContainer, styles.halfInput]}>
+            <Text style={styles.dateLabel}>Check-out</Text>
+            {Platform.OS === 'web' ? (
+              <input
+                type="date"
+                value={checkOut}
+                onChange={(e: any) => setCheckOut(e.target.value)}
+                min={getCheckOutMinimo()}
+                disabled={!checkIn}
+                style={{
+                  ...styles.webDateInput,
+                  backgroundColor: !checkIn ? '#F3F4F6' : '#FFF',
+                  borderColor: !checkIn ? '#E5E7EB' : '#D1D5DB',
+                  cursor: checkIn ? 'pointer' : 'not-allowed',
+                } as any}
+              />
+            ) : (
+              <TouchableOpacity
+                onPress={() => checkIn && setShowCheckOutPicker(true)}
+                disabled={!checkIn}
+              >
+                <View style={[styles.dateInput, !checkIn && styles.dateInputDisabled]}>
+                  <Text style={checkOut ? styles.dateText : styles.datePlaceholder}>
+                    {checkOut ? formatarData(checkOut) : 'Saída'}
+                  </Text>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={checkIn ? '#1E3A8A' : '#9CA3AF'}
+                    style={styles.calendarIcon}
+                  />
+                </View>
+              </TouchableOpacity>
+            )}
+            {!checkIn && Platform.OS !== 'web' && (
+              <Text style={styles.helperText}>Primeiro o check-in</Text>
+            )}
+          </View>
         </View>
 
+        {/* Date Pickers (Mobile) */}
         {Platform.OS !== 'web' && showCheckInPicker && DateTimePicker && (
           <DateTimePicker
             value={checkIn ? localISOStringToDate(checkIn) : new Date()}
@@ -451,54 +479,6 @@ export default function TelaReserva() {
             minimumDate={new Date()}
           />
         )}
-
-        {/* Check-out */}
-        <View style={styles.dateInputContainer}>
-          <Text style={styles.dateLabel}>Check-out</Text>
-          {Platform.OS === 'web' ? (
-            <input
-              type="date"
-              value={checkOut}
-              onChange={(e: any) => setCheckOut(e.target.value)}
-              min={getCheckOutMinimo()}
-              disabled={!checkIn}
-              style={{
-                height: 50,
-                borderColor: !checkIn ? '#E5E7EB' : '#D1D5DB',
-                borderWidth: 1,
-                borderRadius: 8,
-                paddingLeft: 12,
-                paddingRight: 12,
-                fontSize: 15,
-                fontFamily: 'system-ui',
-                width: '100%',
-                backgroundColor: !checkIn ? '#F3F4F6' : '#FFF',
-                cursor: checkIn ? 'pointer' : 'not-allowed',
-              }}
-            />
-          ) : (
-            <TouchableOpacity 
-              onPress={() => checkIn && setShowCheckOutPicker(true)}
-              disabled={!checkIn}
-            >
-              <View style={[styles.dateInput, !checkIn && styles.dateInputDisabled]}>
-                <Text style={checkOut ? styles.dateText : styles.datePlaceholder}>
-                  {checkOut ? formatarData(checkOut) : 'Selecione a data de saída'}
-                </Text>
-                <Ionicons 
-                  name="calendar-outline" 
-                  size={20} 
-                  color={checkIn ? "#1E3A8A" : "#9CA3AF"} 
-                  style={styles.calendarIcon} 
-                />
-              </View>
-            </TouchableOpacity>
-          )}
-          {!checkIn && Platform.OS !== 'web' && (
-            <Text style={styles.helperText}>Primeiro selecione o check-in</Text>
-          )}
-        </View>
-
         {Platform.OS !== 'web' && showCheckOutPicker && checkIn && DateTimePicker && (
           <DateTimePicker
             value={checkOut ? localISOStringToDate(checkOut) : (() => {
@@ -520,50 +500,60 @@ export default function TelaReserva() {
         <View style={styles.divider} />
 
         {/* Resumo */}
-        <Text style={styles.sectionSubtitle}>Resumo da Reserva</Text>
-        <Text style={styles.textResumo}>
-          <Text style={styles.textBold}>Hotel:</Text> {hotelName}
-        </Text>
-        {selectedRoom && (
+        <Text style={styles.sectionSubtitle}>Resumo do Pedido</Text>
+        <View style={styles.resumoRow}>
           <Text style={styles.textResumo}>
-            <Text style={styles.textBold}>Quarto:</Text> {selectedRoom.name}
+            <Text style={styles.textBold}>Período:</Text>
           </Text>
-        )}
-        
+          <Text style={styles.textResumo}>
+            {checkIn && checkOut ? `${formatarData(checkIn)} - ${formatarData(checkOut)}` : 'Selecione as datas'}
+          </Text>
+        </View>
         {numNoites > 0 && selectedRoom && (
           <>
-            <Text style={styles.textResumo}>
-              <Text style={styles.textBold}>Período:</Text> {formatarData(checkIn)} até {formatarData(checkOut)}
-            </Text>
-            <Text style={styles.textResumo}>
-              <Text style={styles.textBold}>Noites:</Text> {numNoites} {numNoites === 1 ? 'noite' : 'noites'}
-            </Text>
-            <Text style={styles.textResumo}>
-              <Text style={styles.textBold}>Valor por noite:</Text> R$ {selectedRoom.base_price.toFixed(2).replace('.', ',')}
-            </Text>
+            <View style={styles.resumoRow}>
+              <Text style={styles.textResumo}>
+                <Text style={styles.textBold}>Noites:</Text>
+              </Text>
+              <Text style={styles.textResumo}>
+                {numNoites} {numNoites === 1 ? 'noite' : 'noites'}
+              </Text>
+            </View>
+            <View style={styles.resumoRow}>
+              <Text style={styles.textResumo}>
+                <Text style={styles.textBold}>{selectedRoom.name} (Quarto):</Text>
+              </Text>
+              <Text style={styles.textResumo}>
+                R$ {selectedRoom.base_price.toFixed(2).replace('.', ',')} x {numNoites}
+              </Text>
+            </View>
           </>
         )}
 
         <View style={styles.divider} />
-        
-        <Text style={[styles.textResumo, styles.textTotal]}>
-          <Text style={styles.textBold}>Total:</Text> R$ {valorTotal > 0 ? valorTotal.toFixed(2).replace('.', ',') : '0,00'}
-        </Text>
-        
+
+        <View style={styles.resumoRow}>
+          <Text style={[styles.textResumo, styles.textTotal]}>Total a Pagar:</Text>
+          <Text style={[styles.textResumo, styles.textTotal]}>
+            R$ {valorTotal > 0 ? valorTotal.toFixed(2).replace('.', ',') : '0,00'}
+          </Text>
+        </View>
+
         {numNoites === 0 && checkIn && checkOut && (
-          <Text style={styles.errorText}>⚠️ Selecione datas válidas</Text>
+          <Text style={styles.errorText}>⚠️ Selecione datas válidas (Check-out > Check-in)</Text>
         )}
-        
+
         {!selectedRoom && (
-          <Text style={styles.warningText}>⚠️ Selecione um quarto para continuar</Text>
+          <Text style={styles.warningText}>⚠️ Selecione um quarto para calcular o total</Text>
         )}
       </View>
 
-      {/* 2. Dados do Hóspede */}
+      {/* Dados do Hóspede */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>
           <Ionicons name="person-circle-outline" size={20} color="#1E3A8A" /> Confirme seus dados
         </Text>
+        <View style={styles.divider} />
 
         <View style={styles.readOnlyField}>
           <Text style={styles.readOnlyLabel}>Nome completo</Text>
@@ -576,146 +566,160 @@ export default function TelaReserva() {
         </View>
       </View>
 
-      {/* 3. Método de Pagamento */}
+      {/* Método de Pagamento */}
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>
           <Ionicons name="card-outline" size={18} color="#1E3A8A" /> Método de Pagamento
         </Text>
-        <RadioButton 
-          label="Cartão de Crédito/Débito" 
-          selected={metodoPagamento === 'cartao'} 
-          onSelect={() => setMetodoPagamento('cartao')} 
+        <View style={styles.divider} />
+
+        <RadioButton
+          label="Cartão de Crédito/Débito"
+          selected={metodoPagamento === 'cartao'}
+          onSelect={() => setMetodoPagamento('cartao')}
         />
-        <RadioButton 
-          label="Pix" 
-          selected={metodoPagamento === 'pix'} 
-          onSelect={() => setMetodoPagamento('pix')} 
+        <RadioButton
+          label="Pix"
+          selected={metodoPagamento === 'pix'}
+          onSelect={() => setMetodoPagamento('pix')}
         />
 
         {metodoPagamento === 'cartao' && (
           <View style={styles.paymentFields}>
-            <TextInput 
-              style={styles.input} 
-              placeholder="Número do Cartão" 
-              keyboardType="numeric" 
-              value={numCartao} 
-              onChangeText={setNumCartao} 
+            <TextInput
+              style={styles.input}
+              placeholder="Número do Cartão"
+              keyboardType="numeric"
+              value={numCartao}
+              onChangeText={setNumCartao}
             />
-            <TextInput 
-              style={styles.input} 
-              placeholder="Nome no Cartão" 
-              value={nomeCartao} 
-              onChangeText={setNomeCartao} 
+            <TextInput
+              style={styles.input}
+              placeholder="Nome no Cartão"
+              value={nomeCartao}
+              onChangeText={setNomeCartao}
             />
             <View style={styles.row}>
-              <TextInput 
-                style={[styles.input, styles.halfInput]} 
-                placeholder="Validade (MM/AA)" 
-                value={validade} 
-                onChangeText={setValidade} 
+              <TextInput
+                style={[styles.input, styles.halfInput]}
+                placeholder="Validade (MM/AA)"
+                value={validade}
+                onChangeText={setValidade}
               />
-              <TextInput 
-                style={[styles.input, styles.halfInput]} 
-                placeholder="CVV" 
-                keyboardType="numeric" 
-                value={cvv} 
-                onChangeText={setCvv} 
+              <TextInput
+                style={[styles.input, styles.halfInput]}
+                placeholder="CVV"
+                keyboardType="numeric"
+                value={cvv}
+                onChangeText={setCvv}
               />
             </View>
           </View>
         )}
       </View>
 
-      {/* 4. Termos e Confirmação */}
-      <View style={styles.switchContainer}>
-        <Switch 
-          value={aceitaTermos} 
-          onValueChange={setAceitaTermos} 
-          trackColor={{ false: '#767577', true: '#1E3A8A' }} 
-          thumbColor={aceitaTermos ? '#FBBF24' : '#f4f3f4'} 
-        />
-        <Text style={styles.labelSwitch}>
-          Declaro que li e aceito os <Text style={styles.linkText}>Termos e Condições</Text>.
+      {/* Termos e Confirmação */}
+      <View style={[styles.card, { paddingVertical: 20 }]}>
+        <View style={styles.switchContainer}>
+          <Switch
+            value={aceitaTermos}
+            onValueChange={setAceitaTermos}
+            trackColor={{ false: '#767577', true: '#1E3A8A' }}
+            thumbColor={aceitaTermos ? '#FBBF24' : '#f4f3f4'}
+          />
+          <Text style={styles.labelSwitch}>
+            Declaro que li e aceito os <Text style={styles.linkText}>Termos e Condições</Text>.
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, (aceitaTermos && numNoites > 0 && selectedRoom) ? styles.buttonEnabled : styles.buttonDisabled]}
+          onPress={handleConfirmarReserva}
+          disabled={!aceitaTermos || loading || numNoites <= 0 || !selectedRoom}
+        >
+          <Text style={styles.buttonText}>
+            {loading ? <ActivityIndicator color="#FFFFFF" /> : 'Confirmar Reserva'}
+          </Text>
+        </TouchableOpacity>
+
+        {/* BOTÃO CANCELAR - VOLTA PARA TELA ANTERIOR */}
+        <TouchableOpacity
+          style={[styles.button, styles.buttonCancelar]}
+          onPress={() => router.back()}
+        >
+          <Text style={styles.buttonTextCancelar}>
+            Cancelar
+          </Text>
+        </TouchableOpacity>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.secureText}>
+          <Ionicons name="lock-closed-outline" size={14} color="#374151" /> Pagamento 100% Seguro
         </Text>
       </View>
-
-      <TouchableOpacity
-        style={[styles.button, (aceitaTermos && numNoites > 0 && selectedRoom) ? styles.buttonEnabled : styles.buttonDisabled]}
-        onPress={handleConfirmarReserva}
-        disabled={!aceitaTermos || loading || numNoites <= 0 || !selectedRoom}
-      >
-        <Text style={styles.buttonText}>
-          {loading ? 'Processando...' : 'Confirmar Reserva'}
-        </Text>
-      </TouchableOpacity>
-
-      {/* NOVO BOTÃO CANCELAR - VOLTA PARA TELA ANTERIOR */}
-      <TouchableOpacity
-        style={[styles.button, styles.buttonCancelar]}
-        onPress={() => router.back()}
-      >
-        <Text style={styles.buttonTextCancelar}>
-          Cancelar
-        </Text>
-      </TouchableOpacity>
-
-      <Text style={styles.secureText}>
-        <Ionicons name="lock-closed-outline" size={14} color="#374151" /> Pagamento 100% Seguro
-      </Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#E5E7EB' },
+  container: { flex: 1, backgroundColor: '#F3F4F6' },
   contentContainer: {
-    padding: 35,
+    padding: 16,
     paddingBottom: 80,
     maxWidth: 700,
     alignSelf: 'center',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#1E3A8A',
-    textAlign: 'center',
+    width: '100%',
   },
   card: {
     backgroundColor: '#FFFFFF',
-    padding: 25,
-    borderRadius: 12,
-    marginBottom: 25,
+    padding: 16, 
+    borderRadius: 8, 
+    marginBottom: 12, 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  headerCard: {
+    paddingVertical: 20,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1E3A8A',
+    textAlign: 'center',
+    marginBottom: 8,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#374151',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#1E3A8A',
+    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
   },
   sectionSubtitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    marginTop: 10,
-    marginBottom: 10,
     color: '#374151',
+    marginBottom: 10,
   },
   hotelInfo: {
     fontSize: 14,
     color: '#6B7280',
-    marginBottom: 15,
     fontStyle: 'italic',
+    textAlign: 'center',
   },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 10,
   },
   loadingText: {
     marginLeft: 10,
@@ -723,7 +727,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   emptyContainer: {
-    padding: 20,
+    padding: 10,
     alignItems: 'center',
   },
   emptyText: {
@@ -732,79 +736,70 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   roomsContainer: {
-    gap: 12,
+    gap: 8,
   },
   roomCard: {
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 8,
-    padding: 15,
+    borderRadius: 6,
+    padding: 12,
     backgroundColor: '#FAFAFA',
   },
   roomCardSelected: {
     borderColor: '#1E3A8A',
-    backgroundColor: '#EFF6FF',
+    backgroundColor: '#F0F8FF',
+    borderWidth: 2,
   },
   roomHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   roomInfo: {
     flex: 1,
-    marginLeft: 10,
+    marginLeft: 8,
+    marginRight: 10,
   },
   roomName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
   },
   roomType: {
-    fontSize: 13,
-    color: '#6B7280',
-  },
-  roomFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
-  },
-  roomOccupancy: {
     fontSize: 12,
     color: '#6B7280',
   },
   roomPrice: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1E3A8A',
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#059669',
   },
   roomUnits: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#059669',
-    marginTop: 6,
+    marginTop: 4,
     fontWeight: '500',
+    marginLeft: 28,
   },
+  // Data Inputs
   dateInputContainer: {
-    marginBottom: 15,
+    marginBottom: 10,
   },
   dateLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   dateInput: {
-    height: 50,
+    height: 44,
     borderColor: '#D1D5DB',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
+    borderRadius: 6,
+    paddingHorizontal: 10,
     backgroundColor: '#FFF',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -813,154 +808,179 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
   },
   dateText: {
-    flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#111827',
   },
   datePlaceholder: {
-    flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     color: '#9CA3AF',
   },
   calendarIcon: {
     marginLeft: 8,
   },
   helperText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6B7280',
-    marginTop: 4,
+    marginTop: 3,
     fontStyle: 'italic',
   },
+  // Input de Cartão
   input: {
-    height: 45,
+    height: 44,
     borderColor: '#D1D5DB',
     borderWidth: 1,
     borderRadius: 6,
     paddingHorizontal: 10,
     marginBottom: 10,
     backgroundColor: '#FFF',
+    fontSize: 14,
   },
-  row: { flexDirection: 'row', justifyContent: 'space-between' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', gap: 10, flex: 1 },
   halfInput: { width: '48%' },
-  divider: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 15 },
-  textResumo: { fontSize: 15, color: '#4B5563', marginBottom: 8 },
-  textBold: { fontWeight: '600' },
-  textTotal: { fontSize: 18, fontWeight: '700', color: '#1E3A8A', marginTop: 5 },
-  errorText: { 
-    fontSize: 13, 
-    color: '#DC2626', 
-    marginTop: 5,
-    fontWeight: '500' 
+  divider: { height: 1, backgroundColor: '#F3F4F6', marginVertical: 10 },
+  // Resumo
+  resumoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
-  warningText: { 
-    fontSize: 13, 
-    color: '#F59E0B', 
+  textResumo: { fontSize: 14, color: '#4B5563' },
+  textBold: { fontWeight: '600', color: '#111827' },
+  textTotal: { fontSize: 18, fontWeight: '800', color: '#B91C1C' },
+  errorText: {
+    fontSize: 12,
+    color: '#DC2626',
     marginTop: 5,
-    fontWeight: '500' 
+    fontWeight: '500',
   },
-  radioContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 8, 
-    paddingVertical: 5 
+  warningText: {
+    fontSize: 12,
+    color: '#F59E0B',
+    marginTop: 5,
+    fontWeight: '500',
+  },
+  // Radio
+  radioContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    paddingVertical: 4,
   },
   radioCircle: {
-    height: 20,
-    width: 20,
-    borderRadius: 10,
+    height: 18,
+    width: 18,
+    borderRadius: 9,
     borderWidth: 2,
     borderColor: '#1E3A8A',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 8,
   },
-  radioInnerCircle: { 
-    width: 10, 
-    height: 10, 
-    borderRadius: 5, 
-    backgroundColor: '#1E3A8A' 
+  radioInnerCircle: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1E3A8A',
   },
-  radioLabel: { fontSize: 16, color: '#374151' },
-  paymentFields: { 
-    marginTop: 5, 
-    borderLeftWidth: 3, 
-    borderLeftColor: '#FBBF24', 
-    paddingLeft: 10, 
-    paddingTop: 5 
+  radioLabel: { fontSize: 15, color: '#374151' },
+  paymentFields: {
+    marginTop: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#FBBF24',
+    paddingLeft: 10,
+    paddingTop: 5,
   },
-  switchContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginBottom: 20, 
-    paddingHorizontal: 5 
+  // Switch
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  labelSwitch: { 
-    marginLeft: 10, 
-    flexShrink: 1, 
-    color: '#374151' 
+  labelSwitch: {
+    marginLeft: 10,
+    flexShrink: 1,
+    color: '#374151',
+    fontSize: 14,
   },
-  linkText: { 
-    color: '#1E3A8A', 
-    fontWeight: 'bold' 
+  linkText: {
+    color: '#1E3A8A',
+    fontWeight: '700',
   },
-  button: { 
-    padding: 15, 
-    borderRadius: 8, 
-    alignItems: 'center', 
-    marginBottom: 10 
+  // Botões
+  button: {
+    padding: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+    marginBottom: 8,
   },
   buttonEnabled: {
     backgroundColor: '#1E3A8A',
     shadowColor: '#1E3A8A',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
-  buttonDisabled: { 
-    backgroundColor: '#9CA3AF' 
+  buttonDisabled: {
+    backgroundColor: '#9CA3AF',
   },
-  buttonText: { 
-    color: 'white', 
-    fontSize: 17, 
-    fontWeight: '700', 
-    letterSpacing: 0.5 
-  },
-  secureText: { 
-    textAlign: 'center', 
-    fontSize: 12, 
-    color: '#374151', 
-    marginTop: 5 
-  },
-  readOnlyField: { 
-    backgroundColor: '#F3F4F6', 
-    borderRadius: 6, 
-    padding: 10, 
-    marginBottom: 10 
-  },
-  readOnlyLabel: { 
-    fontSize: 12, 
-    fontWeight: '600', 
-    color: '#6B7280', 
-    marginBottom: 3 
-  },
-  readOnlyValue: { 
-    fontSize: 15, 
-    color: '#111827' 
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
   buttonCancelar: {
     backgroundColor: '#DC2626',
-    marginTop: 12,
+    marginTop: 4,
     shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
   },
   buttonTextCancelar: {
     color: 'white',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
-    letterSpacing: 0.5,
+  },
+  secureText: {
+    textAlign: 'center',
+    fontSize: 11,
+    color: '#374151',
+    marginTop: 4,
+  },
+  // Campos Read-Only
+  readOnlyField: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  readOnlyLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 2,
+  },
+  readOnlyValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
+  },
+  // Estilo para o input 'date' da web
+  webDateInput: {
+    height: 44,
+    borderColor: '#D1D5DB',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingLeft: 10,
+    paddingRight: 10,
+    fontSize: 14,
+    fontFamily: 'system-ui',
+    width: '100%',
+    backgroundColor: '#FFF',
+    cursor: 'pointer',
   },
 });
