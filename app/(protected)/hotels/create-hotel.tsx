@@ -1,7 +1,6 @@
 import { Button, ButtonText } from '@/components/ui/button';
 import { HStack } from '@/components/ui/hstack';
 import { VStack } from '@/components/ui/vstack';
-// Estes são imports fictícios, certifique-se de que os caminhos e tipos estão corretos
 import { listAmenities } from '@/services/amenities-api';
 import { createFullHotel } from '@/services/hotels-api';
 import { AmenityOut } from '@/types/amenities';
@@ -51,14 +50,20 @@ const INITIAL_MEDIA: MediaIn = {
     kind: 'MAIN',
 };
 
-const INITIAL_STATE: HotelIn = {
+// TIPAGEM AJUSTADA: Lat/Long é string para facilitar a digitação
+interface HotelInStringCoords extends Omit<HotelIn, 'latitude' | 'longitude'> {
+    latitude: string;
+    longitude: string;
+}
+
+const INITIAL_STATE: HotelInStringCoords = {
     name: '',
     description: null,
     city: '',
     neighborhood: null,
     address: null,
-    latitude: 0,
-    longitude: 0,
+    latitude: '', // Agora é string vazia
+    longitude: '', // Agora é string vazia
     policies: null,
     amenities: [],
     media: [{ url: '', kind: 'MAIN' }],
@@ -107,19 +112,16 @@ const renderSelectedAmenities = (selectedIds: number[], allAmenities: AmenityOut
 
 interface RoomAmenitiesSelectorWrapperProps {
     roomIndex: number,
-    formDataRooms: HotelIn['rooms'],
+    formDataRooms: HotelInStringCoords['rooms'],
     allAmenities: AmenityOut[],
     amenitiesLoading: boolean,
     handleRoomChange: (index: number, key: keyof RoomIn, value: any) => void
 }
 
-// Envolve o seletor em memo para evitar re-renderizações desnecessárias
 const RoomAmenitiesSelectorWrapper = memo(({ roomIndex, formDataRooms, allAmenities, amenitiesLoading, handleRoomChange }: RoomAmenitiesSelectorWrapperProps) => {
     const currentRoomAmenities = formDataRooms[roomIndex].amenities;
-    // Usa useMemo para calcular a lista de IDs apenas quando as amenities da sala mudam
     const selectedIds = useMemo(() => (currentRoomAmenities as any[]).map(a => a.id || a), [currentRoomAmenities]);
 
-    // Usa useCallback para garantir estabilidade do callback
     const handleRoomAmenitiesSelection = useCallback((newIds: number[]) => {
         handleRoomChange(roomIndex, 'amenities', newIds);
     }, [roomIndex, handleRoomChange]);
@@ -149,15 +151,12 @@ interface RoomRepeaterProps {
     canRemove: boolean;
 }
 
-// Componente do repetidor de quartos otimizado com memo
 const RoomRepeater = memo(({ room, index, onRoomChange, onRemove, canRemove }: RoomRepeaterProps) => {
 
-    // Função de mudança de texto estável
     const handleTextChange = useCallback((key: keyof RoomIn, text: string) => {
         onRoomChange(index, key, text);
     }, [index, onRoomChange]);
 
-    // Função de mudança de número estável
     const handleNumberChange = useCallback((key: keyof RoomIn, parser: (s: string) => number) => (text: string) => {
         const value = parser(text.replace(',', '.')) || 0;
         onRoomChange(index, key, value);
@@ -179,7 +178,6 @@ const RoomRepeater = memo(({ room, index, onRoomChange, onRemove, canRemove }: R
             <TextInput
                 style={styles.input}
                 placeholder="Nome do Quarto *"
-                // CRUCIAL: Garante que o valor passado é sempre string
                 value={room.name || ''}
                 onChangeText={handleTextChange.bind(null, 'name')}
             />
@@ -222,7 +220,7 @@ const RoomRepeater = memo(({ room, index, onRoomChange, onRemove, canRemove }: R
 // --- COMPONENTE PRINCIPAL ---
 
 export default function CreateHotelScreen() {
-    const [formData, setFormData] = useState<HotelIn>(INITIAL_STATE);
+    const [formData, setFormData] = useState<HotelInStringCoords>(INITIAL_STATE);
     const [loading, setLoading] = useState(false);
 
     const [allAmenities, setAllAmenities] = useState<AmenityOut[]>([]);
@@ -243,22 +241,21 @@ export default function CreateHotelScreen() {
         loadAmenities();
     }, []);
 
-    // Funções de manipulação de estado com useCallback para estabilidade
-
-    const handleChange = useCallback((key: keyof HotelIn, value: string | number | null) => {
+    const handleChange = useCallback((key: keyof HotelInStringCoords, value: string | number | null) => {
 
         setFormData(prev => {
             let updatedValue: any = value;
 
-            // Converte string vazia para null, exceto para lat/long onde 0 é o default
             if (typeof value === 'string' && value.trim() === '' && key !== 'latitude' && key !== 'longitude') {
                 updatedValue = null;
             }
 
-            // Trata lat/long para number
             if (key === 'latitude' || key === 'longitude') {
-                const textValue = value as string;
-                updatedValue = parseFloat(textValue.trim().replace(',', '.')) || 0;
+                const textValue = (value as string).trim();
+                
+                // Limpa o valor, permitindo apenas dígitos, pontos e o sinal de menos.
+                const cleanedValue = textValue.replace(/[^0-9.-]/g, ''); 
+                updatedValue = cleanedValue;
             }
 
             return { ...prev, [key]: updatedValue };
@@ -314,6 +311,11 @@ export default function CreateHotelScreen() {
     };
 
     const handleCreate = async () => {
+        
+        // CONVERSÃO FINAL: Converte a string para number, usando 0 se for inválido
+        const finalLatitude = parseFloat(formData.latitude.replace(',', '.')) || 0;
+        const finalLongitude = parseFloat(formData.longitude.replace(',', '.')) || 0;
+
         const isRoomValid = formData.rooms.every(room =>
             room.name && room.name.trim() !== '' &&
             room.room_type && room.room_type.trim() !== '' &&
@@ -327,33 +329,29 @@ export default function CreateHotelScreen() {
             return;
         }
 
-        if (formData.latitude < -90 || formData.latitude > 90 || formData.longitude < -180 || formData.longitude > 180) {
+        if (finalLatitude < -90 || finalLatitude > 90 || finalLongitude < -180 || finalLongitude > 180) {
             Alert.alert("Erro de Validação", "As coordenadas geográficas (Latitude: -90 a 90, Longitude: -180 a 180) estão fora do intervalo válido.");
             return;
         }
 
-        // Mapeia amenities para enviar apenas os IDs, se necessário
-        const formDataToSend = {
+        // Constrói o objeto final com números para a API
+        const formDataToSend: HotelIn = {
             ...formData,
+            latitude: finalLatitude,
+            longitude: finalLongitude,
             rooms: formData.rooms.map(room => ({
                 ...room,
-                // Converte a lista de objetos/IDs de amenities para apenas IDs
                 amenities: (room.amenities as any[]).map(a => a.id || a)
             }))
-        };
+        } as HotelIn;
+
 
         setLoading(true);
         try {
-            // Simulação de chamada de API
             const newHotel: HotelDetailOut = await createFullHotel(formDataToSend);
 
-            // 🌟 MUDANÇA CRUCIAL: Substitui Alert.alert() pela navegação para o modal
-
-            // 1. Reseta o formulário *antes* de navegar
-            // Isso garante que, se o usuário escolher "Cadastrar Outro", o formulário já estará limpo
             setFormData(INITIAL_STATE);
             
-            // 2. Navega para a rota do modal, passando o nome do hotel como parâmetro
             router.push({
                 pathname: '/hotel-success-modal', 
                 params: { 
@@ -370,7 +368,8 @@ export default function CreateHotelScreen() {
         }
     };
 
-    const displayCoordValue = (value: number) => value === 0 ? '' : value.toString();
+    // FUNÇÃO AJUSTADA: Exibe a string do estado, que já está limpa
+    const displayCoordValue = (value: string) => value;
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -391,7 +390,6 @@ export default function CreateHotelScreen() {
 
                 <VStack style={styles.formContent}>
 
-                    {/* 1. INFORMAÇÕES BÁSICAS */}
                     <View style={styles.sectionCard}>
                         <View style={styles.sectionHeader}>
                             <MapPin size={24} color={AppColors.PRIMARY} />
@@ -410,14 +408,16 @@ export default function CreateHotelScreen() {
                             <TextInput
                                 style={StyleSheet.flatten([styles.input, styles.coordinateInput])}
                                 placeholder="Latitude"
-                                keyboardType="numeric"
+                                // Simplificado, mas o regex no handleChange garante a limpeza
+                                keyboardType="default" 
                                 value={displayCoordValue(formData.latitude)}
                                 onChangeText={(text) => handleChange('latitude', text)}
                             />
                             <TextInput
                                 style={StyleSheet.flatten([styles.input, styles.coordinateInput])}
                                 placeholder="Longitude"
-                                keyboardType="numeric"
+                                // Simplificado, mas o regex no handleChange garante a limpeza
+                                keyboardType="default" 
                                 value={displayCoordValue(formData.longitude)}
                                 onChangeText={(text) => handleChange('longitude', text)}
                             />
@@ -427,7 +427,6 @@ export default function CreateHotelScreen() {
                         </Text>
                     </View>
 
-                    {/* 2. COMODIDADES GERAIS */}
                     <View style={styles.sectionCard}>
                         <View style={styles.sectionHeader}>
                             <Sparkles size={24} color={AppColors.PRIMARY} />
@@ -449,7 +448,6 @@ export default function CreateHotelScreen() {
 
                     </View>
 
-                    {/* 3. MÍDIAS */}
                     <View style={styles.sectionCard}>
                         <View style={styles.sectionHeader}>
                             <Image size={24} color={AppColors.PRIMARY} />
@@ -475,7 +473,6 @@ export default function CreateHotelScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    {/* 4. GESTÃO DE TIPOS DE QUARTOS */}
                     <View style={styles.sectionCard}>
                         <View style={styles.sectionHeader}>
                             <BedDouble size={24} color={AppColors.PRIMARY} />

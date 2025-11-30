@@ -38,7 +38,7 @@ export default function HotelSuccessModal() {
             </Text>
             
             <Text style={styles.message}>
-                O hotel **{hotelName}** foi cadastrado.
+                O hotel {hotelName} foi cadastrado.
             </Text>
             
             <ActivityIndicator 
