@@ -50,7 +50,6 @@ const INITIAL_MEDIA: MediaIn = {
     kind: 'MAIN',
 };
 
-// TIPAGEM AJUSTADA: Lat/Long é string para facilitar a digitação
 interface HotelInStringCoords extends Omit<HotelIn, 'latitude' | 'longitude'> {
     latitude: string;
     longitude: string;
@@ -62,8 +61,8 @@ const INITIAL_STATE: HotelInStringCoords = {
     city: '',
     neighborhood: null,
     address: null,
-    latitude: '', // Agora é string vazia
-    longitude: '', // Agora é string vazia
+    latitude: '',
+    longitude: '',
     policies: null,
     amenities: [],
     media: [{ url: '', kind: 'MAIN' }],
@@ -253,7 +252,6 @@ export default function CreateHotelScreen() {
             if (key === 'latitude' || key === 'longitude') {
                 const textValue = (value as string).trim();
                 
-                // Limpa o valor, permitindo apenas dígitos, pontos e o sinal de menos.
                 const cleanedValue = textValue.replace(/[^0-9.-]/g, ''); 
                 updatedValue = cleanedValue;
             }
@@ -312,7 +310,6 @@ export default function CreateHotelScreen() {
 
     const handleCreate = async () => {
         
-        // CONVERSÃO FINAL: Converte a string para number, usando 0 se for inválido
         const finalLatitude = parseFloat(formData.latitude.replace(',', '.')) || 0;
         const finalLongitude = parseFloat(formData.longitude.replace(',', '.')) || 0;
 
@@ -334,7 +331,6 @@ export default function CreateHotelScreen() {
             return;
         }
 
-        // Constrói o objeto final com números para a API
         const formDataToSend: HotelIn = {
             ...formData,
             latitude: finalLatitude,
@@ -368,11 +364,15 @@ export default function CreateHotelScreen() {
         }
     };
 
-    // FUNÇÃO AJUSTADA: Exibe a string do estado, que já está limpa
     const displayCoordValue = (value: string) => value;
 
     return (
         <SafeAreaView style={styles.safeArea}>
+            {/* O cabeçalho personalizado foi removido daqui. 
+            O título e o botão de voltar agora devem ser configurados no _layout.tsx, se necessários. 
+            Ou, como neste caso, o `headerShown: false` acima removeu o header nativo e este componente agora é FullScreen.
+            */}
+            
             <View style={styles.headerContainer}>
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <ArrowLeft size={24} color={AppColors.BLACK} />
@@ -408,7 +408,6 @@ export default function CreateHotelScreen() {
                             <TextInput
                                 style={StyleSheet.flatten([styles.input, styles.coordinateInput])}
                                 placeholder="Latitude"
-                                // Simplificado, mas o regex no handleChange garante a limpeza
                                 keyboardType="default" 
                                 value={displayCoordValue(formData.latitude)}
                                 onChangeText={(text) => handleChange('latitude', text)}
@@ -416,7 +415,6 @@ export default function CreateHotelScreen() {
                             <TextInput
                                 style={StyleSheet.flatten([styles.input, styles.coordinateInput])}
                                 placeholder="Longitude"
-                                // Simplificado, mas o regex no handleChange garante a limpeza
                                 keyboardType="default" 
                                 value={displayCoordValue(formData.longitude)}
                                 onChangeText={(text) => handleChange('longitude', text)}

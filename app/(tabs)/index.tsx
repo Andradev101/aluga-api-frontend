@@ -1,10 +1,6 @@
 // app/(tabs)/index.tsx
 
 import HomeHeader from '@/components/home-header';
-// 🚨 CORREÇÃO: Mude a forma como o HotelsScreen é importado.
-// Se ele é exportado com 'export default', a importação está correta,
-// mas se ele está sendo renomeado ou se o bundler está se confundindo,
-// podemos forçar o import do React.
 import HotelsScreen from '@/components/hotel-listing';
 import * as Storage from '@/components/secureStorage';
 import { useFocusEffect } from 'expo-router';
@@ -49,13 +45,8 @@ export default function HotelsTabScreen() {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <StatusBar style="auto" />
-            
-            {/* <View style={styles.fixedHeader}>
-                {MemoizedHomeHeader}
-            </View> */}
             <HotelsScreen filters={appliedFilters} /> 
             <Login></Login>
-            {/* O componente agora deve ser reconhecido corretamente */}
 
 
             <FilterActionSheet
