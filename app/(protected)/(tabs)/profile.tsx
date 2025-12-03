@@ -132,9 +132,9 @@ export default function ProfileScreen() {
                         {userInfo && (
                             <ModalComponent content={userInfo} buttonName="Informações pessoais" variant="self" onCloseCallback={() => fetchAndCall()}>
                                 {(openAlert) => (
-                                    <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white" onPress={openAlert}>
+                                    <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white data-[hover=true]:bg-transparent" onPress={openAlert}>
                                         <ButtonIcon as={IconProvider.UserPen} color='#9e9e9eff' size="md" />
-                                        <ButtonText className='px-1 font-light text-gray-800'>Minhas informações</ButtonText>
+                                        <ButtonText className='px-1 font-light text-gray-800 data-[hover=true]:text-gray-800'>Minhas informações</ButtonText>
                                         <View className="flex-1" />
                                         <ButtonIcon as={IconProvider.ChevronRight} className='ml-auto' color='#9e9e9eff' size="lg" />
                                     </Button>
@@ -143,16 +143,16 @@ export default function ProfileScreen() {
                             </ModalComponent>
                         )}
                         <Divider className="w-full"></Divider>
-                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white">
+                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white data-[hover=true]:bg-transparent">
                             <ButtonIcon as={IconProvider.BookMarked} color='#9e9e9eff' size="md" />
-                            <ButtonText className='px-1 font-light text-gray-800'>Minhas Reservas</ButtonText>
+                            <ButtonText className='px-1 font-light text-gray-800 data-[hover=true]:text-gray-800'>Minhas Reservas</ButtonText>
                             <View className="flex-1" />
                             <ButtonIcon as={IconProvider.ChevronRight} className='ml-auto' color='#9e9e9eff' size="lg" />
                         </Button>
-                        <Divider className="w-full"></Divider>
-                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white" onPress={() => router.replace('/my-reviews')}>
+                        <Divider className="w-full" ></Divider>
+                        <Button size="lg" className="my-1 rounded-xl w-full justify-start px-3 bg-white data-[hover=true]:bg-transparent" onPress={() => router.replace('/my-reviews')}>
                             <ButtonIcon as={IconProvider.Star} color='#9e9e9eff' size="md" />
-                            <ButtonText className='px-1 font-light text-gray-800'>Minhas Reviews</ButtonText>
+                            <ButtonText className='px-1 font-light text-gray-800 data-[hover=true]:text-gray-800'>Minhas Reviews</ButtonText>
                             <View className="flex-1" />
                             <ButtonIcon as={IconProvider.ChevronRight} className='ml-auto' color='#9e9e9eff' size="lg" />
                         </Button>
