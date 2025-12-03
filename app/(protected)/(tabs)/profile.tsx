@@ -10,9 +10,9 @@ import { Heading } from '@/components/ui/heading';
 import { VStack } from '@/components/ui/vstack';
 import { useAuth } from '@/hooks/useAuth';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as IconProvider from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const MenuItem = ({
@@ -57,15 +57,9 @@ interface UserInfo {
 }
 
 export default function ProfileScreen() {
-
-    const { fetchUserData, userData, isAuthenticated, logout } = useAuth();
-
-
-    const [loaded, setLoaded] = useState(false);
-    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
-    useEffect(() => {
-        const fetchAndCall = async () => {
+    useFocusEffect(
+        useCallback(() => {
+            const fetchAndCall = async () => {
             setLoaded(false)
             try {
                 await fetchUserData();
@@ -79,10 +73,14 @@ export default function ProfileScreen() {
                 setLoaded(true)
             }
         };
-
         fetchAndCall();
-    }, [fetchUserData]);
+        }, [])
+    )
+    const { fetchUserData, userData, isAuthenticated, logout } = useAuth();
 
+
+    const [loaded, setLoaded] = useState(false);
+    const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
     async function fetchAndCall() {
         setLoaded(false)
